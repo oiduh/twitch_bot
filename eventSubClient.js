@@ -47,7 +47,7 @@ cli.on('message', function message(data) {
             switch (_a.label) {
                 case 0:
                     parsed_data = JSON.parse(data);
-                    if (!("metadata" in parsed_data && "message_type" in parsed_data["metadata"])) return [3 /*break*/, 2];
+                    if (!("metadata" in parsed_data && "message_type" in parsed_data["metadata"])) return [3 /*break*/, 3];
                     console.log("A message with type \"".concat(parsed_data["metadata"]["message_type"], "\" was received!"));
                     if (!(parsed_data["metadata"]["message_type"] === "session_welcome")) return [3 /*break*/, 2];
                     return [4 /*yield*/, fetch("https://api.twitch.tv/helix/eventsub/subscriptions", {
@@ -73,8 +73,13 @@ cli.on('message', function message(data) {
                             .then(function (data) { return console.log(data); })];
                 case 1:
                     res = _a.sent();
-                    _a.label = 2;
-                case 2: return [2 /*return*/];
+                    return [3 /*break*/, 3];
+                case 2:
+                    if (parsed_data["metadata"]["message_type"] === "notification") {
+                        console.log("notification received!");
+                    }
+                    _a.label = 3;
+                case 3: return [2 /*return*/];
             }
         });
     });
