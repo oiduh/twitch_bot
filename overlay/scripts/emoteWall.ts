@@ -1,6 +1,6 @@
 window.addEventListener("click", showEmoteCommand, false);
 function showEmoteCommand() {
-    let emote = new Emote("KEKW.png", 128, 128);
+    let emote = new Emote("../media/images/KEKW.png", 128, 128);
     emote.setRandomPosition();
     emote.show();
 }
