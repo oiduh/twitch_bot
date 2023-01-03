@@ -36,43 +36,50 @@ var __generator = (this && this.__generator) || function (thisArg, body) {
 };
 var ws = require("ws");
 require("dotenv").config();
-var cli = new ws.WebSocket("wss://eventsub-beta.wss.twitch.tv/ws");
-cli.on('open', function open() {
+var BROADCASTER_USER_ID = "112465769";
+var events = [];
+function addEvents(data) {
+    events.push(data);
+}
+var event_handler = new ws.WebSocket("wss://eventsub-beta.wss.twitch.tv/ws");
+event_handler.on('open', function open() {
     console.log("connection established");
 });
-cli.on('message', function message(data) {
+event_handler.on('message', function message(data) {
     return __awaiter(this, void 0, void 0, function () {
-        var parsed_data, res;
+        var parsed_data, metadata, message_type, session_id, channel_follows;
         return __generator(this, function (_a) {
             switch (_a.label) {
                 case 0:
                     parsed_data = JSON.parse(data);
-                    if (!("metadata" in parsed_data && "message_type" in parsed_data["metadata"])) return [3 /*break*/, 3];
-                    console.log("A message with type \"".concat(parsed_data["metadata"]["message_type"], "\" was received!"));
-                    if (!(parsed_data["metadata"]["message_type"] === "session_welcome")) return [3 /*break*/, 2];
-                    return [4 /*yield*/, fetch("https://api.twitch.tv/helix/eventsub/subscriptions", {
+                    console.log(parsed_data);
+                    if (!messageVerrifed(parsed_data)) return [3 /*break*/, 3];
+                    metadata = parsed_data["metadata"];
+                    message_type = metadata["message_type"];
+                    console.log("A message with type \"".concat(message_type, "\" was received!"));
+                    if (!(message_type === "session_welcome")) return [3 /*break*/, 2];
+                    session_id = parsed_data["payload"]["session"]["id"];
+                    channel_follows = {
+                        "type": "channel.follow",
+                        "version": "1",
+                        "condition": {
+                            "broadcaster_user_id": BROADCASTER_USER_ID
+                        },
+                        "transport": {
+                            "method": "websocket",
+                            "session_id": "".concat(session_id)
+                        }
+                    };
+                    addEvents(channel_follows);
+                    /*let res = */ return [4 /*yield*/, fetch("https://api.twitch.tv/helix/eventsub/subscriptions", {
                             method: "POST",
-                            headers: {
-                                "Authorization": "Bearer ".concat(process.env.TWITCH_OAUTH_TOKEN_CHANNEL),
-                                "Client-Id": "".concat(process.env.TWITCH_CLIENT_ID_CHANNEL),
-                                "Content-Type": "application/json"
-                            },
-                            body: JSON.stringify({
-                                "type": "channel.follow",
-                                "version": "1",
-                                "condition": {
-                                    "broadcaster_user_id": "112465769"
-                                },
-                                "transport": {
-                                    "method": "websocket",
-                                    "session_id": "".concat(parsed_data["payload"]["session"]["id"])
-                                }
-                            })
+                            headers: getAuthHeaders(),
+                            body: JSON.stringify(events[0])
                         })
                             .then(function (response) { return response.json(); })
                             .then(function (data) { return console.log(data); })];
                 case 1:
-                    res = _a.sent();
+                    /*let res = */ _a.sent();
                     return [3 /*break*/, 3];
                 case 2:
                     if (parsed_data["metadata"]["message_type"] === "notification") {
@@ -84,3 +91,13 @@ cli.on('message', function message(data) {
         });
     });
 });
+function messageVerrifed(data) {
+    return "metadata" in data && "message_type" in data["metadata"];
+}
+function getAuthHeaders() {
+    return {
+        "Authorization": "Bearer ".concat(process.env.TWITCH_OAUTH_TOKEN_CHANNEL),
+        "Client-Id": "".concat(process.env.TWITCH_CLIENT_ID_CHANNEL),
+        "Content-Type": "application/json"
+    };
+}

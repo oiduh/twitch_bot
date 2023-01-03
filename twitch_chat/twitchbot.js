@@ -16,6 +16,7 @@ var client = new tmi.Client({
     },
     channels: ['oiduh']
 });
+console.log("oauth:".concat(process.env.TWITCH_OAUTH_TOKEN_BOT));
 client.connect();
 client.on('message', function (channel, tags, message, self) {
     if (self)

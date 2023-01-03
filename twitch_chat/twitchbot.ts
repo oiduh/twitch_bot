@@ -1,6 +1,3 @@
-// tutorial from:
-// https://javascript.plainenglish.io/typescript-cannot-find-name-require-8e327dde6363
-
 const tmi = require("tmi.js");
 require("dotenv").config();
 

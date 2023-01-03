@@ -1,36 +1,53 @@
 const ws = require("ws");
 require("dotenv").config();
 
-const cli = new ws.WebSocket("wss://eventsub-beta.wss.twitch.tv/ws");
+const BROADCASTER_USER_ID = "112465769";
 
-cli.on('open', function open() {
+let events: Record<string, any>[] = [];
+
+function addEvents(data: Record<string, any>): void {
+    events.push(data);
+}
+
+
+const event_handler = new ws.WebSocket("wss://eventsub-beta.wss.twitch.tv/ws");
+
+event_handler.on('open', function open() {
     console.log("connection established");
 });
 
-cli.on('message', async function message(data) {
+event_handler.on('message', async function message(data) {
     let parsed_data = JSON.parse(data);
-    if("metadata" in parsed_data && "message_type" in parsed_data["metadata"]) {
-        console.log(`A message with type "${parsed_data["metadata"]["message_type"]}" was received!`);
+    console.log(parsed_data);
+    if(messageVerrifed(parsed_data)) {
+        let metadata = parsed_data["metadata"];
+        let message_type = metadata["message_type"];
+        console.log(`A message with type "${message_type}" was received!`);
 
-        if(parsed_data["metadata"]["message_type"] === "session_welcome") {
-            let res = await fetch("https://api.twitch.tv/helix/eventsub/subscriptions", {
-                method: "POST",
-                headers: {
-                    "Authorization": `Bearer ${process.env.TWITCH_OAUTH_TOKEN_CHANNEL}`,
-                    "Client-Id": `${process.env.TWITCH_CLIENT_ID_CHANNEL}`,
-                    "Content-Type": "application/json"
+        if(message_type === "session_welcome") {
+            // TODO: function that subscribes to all predefined events
+
+            let session_id = parsed_data["payload"]["session"]["id"];
+
+            let channel_follows = {
+                "type": "channel.follow",
+                "version": "1",
+                "condition": {
+                    "broadcaster_user_id": BROADCASTER_USER_ID
                 },
-                body: JSON.stringify({
-                    "type": "channel.follow",
-                    "version": "1",
-                    "condition": {
-                        "broadcaster_user_id": "112465769"
-                    },
-                    "transport": {
-                        "method": "websocket",
-                        "session_id": `${parsed_data["payload"]["session"]["id"]}`
-                    }
-                }),
+                "transport": {
+                    "method": "websocket",
+                    "session_id": `${session_id}`
+                }
+            };
+
+            addEvents(channel_follows);
+
+
+            /*let res = */await fetch("https://api.twitch.tv/helix/eventsub/subscriptions", {
+                method: "POST",
+                headers: getAuthHeaders(),
+                body: JSON.stringify(events[0]),
             })
                 .then((response) => response.json())
                 .then((data) => console.log(data))
@@ -41,7 +58,18 @@ cli.on('message', async function message(data) {
     }
 });
 
+function messageVerrifed(data: Record<any, any>): boolean {
+    return "metadata" in data && "message_type" in data["metadata"];
 
+}
+
+function getAuthHeaders(): Record<string, string> {
+    return {
+        "Authorization": `Bearer ${process.env.TWITCH_OAUTH_TOKEN_CHANNEL}`,
+        "Client-Id": `${process.env.TWITCH_CLIENT_ID_CHANNEL}`,
+        "Content-Type": "application/json"
+    }
+}
 
 
 
