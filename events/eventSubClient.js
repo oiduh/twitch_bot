@@ -47,17 +47,19 @@ event_handler.on('open', function open() {
 });
 event_handler.on('message', function message(data) {
     return __awaiter(this, void 0, void 0, function () {
-        var parsed_data, metadata, message_type, session_id, channel_follows;
+        var parsed_data, metadata, message_type, session_id, channel_follows, subscription_type, new_follower_name;
         return __generator(this, function (_a) {
             switch (_a.label) {
                 case 0:
                     parsed_data = JSON.parse(data);
+                    console.log("---------START------------");
                     console.log(parsed_data);
-                    if (!messageVerrifed(parsed_data)) return [3 /*break*/, 3];
+                    console.log("----------END-------------");
+                    if (!messageVerrifed(parsed_data)) return [3 /*break*/, 4];
                     metadata = parsed_data["metadata"];
                     message_type = metadata["message_type"];
                     console.log("A message with type \"".concat(message_type, "\" was received!"));
-                    if (!(message_type === "session_welcome")) return [3 /*break*/, 2];
+                    if (!(message_type === "session_welcome")) return [3 /*break*/, 3];
                     session_id = parsed_data["payload"]["session"]["id"];
                     channel_follows = {
                         "type": "channel.follow",
@@ -77,16 +79,34 @@ event_handler.on('message', function message(data) {
                             body: JSON.stringify(events[0])
                         })
                             .then(function (response) { return response.json(); })
-                            .then(function (data) { return console.log(data); })];
+                            .then(function (data) { return console.log(data); })
+                        // CHECK ALL EVENTS THE BOT IS SUBSCRIBED TO
+                    ];
                 case 1:
                     /*let res = */ _a.sent();
-                    return [3 /*break*/, 3];
+                    // CHECK ALL EVENTS THE BOT IS SUBSCRIBED TO
+                    return [4 /*yield*/, fetch("https://api.twitch.tv/helix/eventsub/subscriptions", {
+                            method: "GET",
+                            headers: getAuthHeaders(false)
+                        })
+                            .then(function (response) { return response.json(); })
+                            .then(function (data) { return console.log(data); })];
                 case 2:
+                    // CHECK ALL EVENTS THE BOT IS SUBSCRIBED TO
+                    _a.sent();
+                    return [3 /*break*/, 4];
+                case 3:
                     if (parsed_data["metadata"]["message_type"] === "notification") {
-                        console.log("notification received!");
+                        subscription_type = metadata["subscription_type"];
+                        console.log("The notification type is ".concat(subscription_type));
+                        if (subscription_type === "channel.follow") {
+                            new_follower_name = parsed_data["payload"]["event"]["user_name"];
+                            console.log("".concat(new_follower_name, " just subscribed -> do something silly!"));
+                        }
+                        // TODO: handle other notifications
                     }
-                    _a.label = 3;
-                case 3: return [2 /*return*/];
+                    _a.label = 4;
+                case 4: return [2 /*return*/];
             }
         });
     });
@@ -94,10 +114,13 @@ event_handler.on('message', function message(data) {
 function messageVerrifed(data) {
     return "metadata" in data && "message_type" in data["metadata"];
 }
-function getAuthHeaders() {
-    return {
+function getAuthHeaders(content_type) {
+    if (content_type === void 0) { content_type = true; }
+    var headers = {
         "Authorization": "Bearer ".concat(process.env.TWITCH_OAUTH_TOKEN_CHANNEL),
-        "Client-Id": "".concat(process.env.TWITCH_CLIENT_ID_CHANNEL),
-        "Content-Type": "application/json"
+        "Client-Id": "".concat(process.env.TWITCH_CLIENT_ID_CHANNEL)
     };
+    if (content_type)
+        headers["Content-Type"] = "application/json";
+    return headers;
 }

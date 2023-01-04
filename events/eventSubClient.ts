@@ -18,7 +18,9 @@ event_handler.on('open', function open() {
 
 event_handler.on('message', async function message(data) {
     let parsed_data = JSON.parse(data);
+    console.log("---------START------------");
     console.log(parsed_data);
+    console.log("----------END-------------");
     if(messageVerrifed(parsed_data)) {
         let metadata = parsed_data["metadata"];
         let message_type = metadata["message_type"];
@@ -26,6 +28,7 @@ event_handler.on('message', async function message(data) {
 
         if(message_type === "session_welcome") {
             // TODO: function that subscribes to all predefined events
+            // https://dev.twitch.tv/docs/eventsub/eventsub-subscription-types#subscription-types
 
             let session_id = parsed_data["payload"]["session"]["id"];
 
@@ -51,9 +54,30 @@ event_handler.on('message', async function message(data) {
             })
                 .then((response) => response.json())
                 .then((data) => console.log(data))
+
+            // CHECK ALL EVENTS THE BOT IS SUBSCRIBED TO
+
+            await fetch("https://api.twitch.tv/helix/eventsub/subscriptions", {
+                method: "GET",
+                headers: getAuthHeaders(false)
+            })
+                .then((response) => response.json())
+                .then((data) => console.log(data))
+
         }
         else if(parsed_data["metadata"]["message_type"] === "notification"){
-            console.log("notification received!");
+
+            let subscription_type = metadata["subscription_type"];
+
+            console.log(`The notification type is ${subscription_type}`);
+
+            if(subscription_type === "channel.follow") {
+                let new_follower_name = parsed_data["payload"]["event"]["user_name"];
+                console.log(`${new_follower_name} just subscribed -> do something silly!`)
+            }
+
+            // TODO: handle other notifications
+
         }
     }
 });
@@ -63,12 +87,15 @@ function messageVerrifed(data: Record<any, any>): boolean {
 
 }
 
-function getAuthHeaders(): Record<string, string> {
-    return {
+function getAuthHeaders(content_type: boolean = true): Record<string, string> {
+    let headers = {
         "Authorization": `Bearer ${process.env.TWITCH_OAUTH_TOKEN_CHANNEL}`,
-        "Client-Id": `${process.env.TWITCH_CLIENT_ID_CHANNEL}`,
-        "Content-Type": "application/json"
-    }
+        "Client-Id": `${process.env.TWITCH_CLIENT_ID_CHANNEL}`
+    };
+    if(content_type)
+        headers["Content-Type"] = "application/json";
+
+    return headers;
 }
 
 
