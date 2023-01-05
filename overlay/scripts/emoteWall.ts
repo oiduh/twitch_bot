@@ -1,3 +1,16 @@
+const EmoteWebSocket = require("ws");
+
+let client_socket = new EmoteWebSocket('ws://localhost:8088/');
+
+client_socket.on("open", () => {
+    client_socket.send("hello");
+});
+
+client_socket.on("message", (data, flags) => {
+    console.log('Server said: ' + data);
+});
+
+
 window.addEventListener("click", showEmoteCommand, false);
 function showEmoteCommand() {
     let emote = new Emote("../media/images/KEKW.png", 128, 128);
