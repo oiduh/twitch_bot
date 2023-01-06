@@ -1,6 +1,8 @@
-const WebSocketServer = require("ws").Server;
+const ChatServer = require("ws").Server;
 const tmi = require("tmi.js");
 require("dotenv").config();
+
+const server = new ChatServer({port: 3000});
 
 const client = new tmi.Client({
     options: {
@@ -17,7 +19,14 @@ const client = new tmi.Client({
     channels: ['oiduh']
 });
 
-const chat_server = new WebSocketServer({port: 8088});
+let emoteWall;
+
+server.on("connection", async (ws) => {
+    console.log("new connection");
+    emoteWall = await ws;
+    emoteWall.on("message", (data) => console.log(data));
+});
+
 client.connect();
 
 client.on('message', async (channel, tags, message, self) => {
@@ -34,6 +43,12 @@ client.on('message', async (channel, tags, message, self) => {
         for(const emote_id in emotes_record) {
             let full_emote_url = emote_url + emote_id + "/default/dark/3.0";
             console.log(full_emote_url);
+            try {
+                emoteWall.send(full_emote_url);
+            }
+            catch (e) {
+                console.log(e);
+            }
         }
 
         console.log('---');
@@ -41,8 +56,3 @@ client.on('message', async (channel, tags, message, self) => {
         console.log('---');
     }
 });
-
-chat_server.on("connection", (client, request) => {
-    console.log("new connection");
-    client.on("message", data => console.log(data));
-})

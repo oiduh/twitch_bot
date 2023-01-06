@@ -35,9 +35,10 @@ var __generator = (this && this.__generator) || function (thisArg, body) {
     }
 };
 var _this = this;
-var WebSocketServer = require("ws").Server;
+var ChatServer = require("ws").Server;
 var tmi = require("tmi.js");
 require("dotenv").config();
+var server = new ChatServer({ port: 3000 });
 var client = new tmi.Client({
     options: {
         debug: true
@@ -52,7 +53,20 @@ var client = new tmi.Client({
     },
     channels: ['oiduh']
 });
-var chat_server = new WebSocketServer({ port: 8088 });
+var emoteWall;
+server.on("connection", function (ws) { return __awaiter(_this, void 0, void 0, function () {
+    return __generator(this, function (_a) {
+        switch (_a.label) {
+            case 0:
+                console.log("new connection");
+                return [4 /*yield*/, ws];
+            case 1:
+                emoteWall = _a.sent();
+                emoteWall.on("message", function (data) { return console.log(data); });
+                return [2 /*return*/];
+        }
+    });
+}); });
 client.connect();
 client.on('message', function (channel, tags, message, self) { return __awaiter(_this, void 0, void 0, function () {
     var emote_url, emotes_record, emote_id, full_emote_url;
@@ -68,6 +82,12 @@ client.on('message', function (channel, tags, message, self) { return __awaiter(
             for (emote_id in emotes_record) {
                 full_emote_url = emote_url + emote_id + "/default/dark/3.0";
                 console.log(full_emote_url);
+                try {
+                    emoteWall.send(full_emote_url);
+                }
+                catch (e) {
+                    console.log(e);
+                }
             }
             console.log('---');
             console.log(tags);
@@ -76,7 +96,3 @@ client.on('message', function (channel, tags, message, self) { return __awaiter(
         return [2 /*return*/];
     });
 }); });
-chat_server.on("connection", function (client, request) {
-    console.log("new connection");
-    client.on("message", function (data) { return console.log(data); });
-});
