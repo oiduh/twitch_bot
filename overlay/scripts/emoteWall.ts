@@ -1,6 +1,27 @@
-window.addEventListener("click", showEmoteCommand, false);
-function showEmoteCommand() {
-    let emote = new Emote("../media/images/KEKW.png", 128, 128);
+window.onload = () => connect_to_server();
+
+function connect_to_server() {
+    let socket;
+    socket = new WebSocket('ws://localhost:3000');
+
+    socket.onmessage = (event) => {
+        console.log("received message:")
+        console.log(event.data);
+        //let img = document.createElement("img");
+        //img.src = event.data;
+        //document.body.appendChild(img);
+
+        showEmoteCommand(event.data);
+    };
+
+    socket.onopen = (event) => console.log("connected");
+    socket.onclose = (event) => console.log("closed");
+    socket.onerror = (event) => console.log("error");
+}
+
+//window.addEventListener("click", showEmoteCommand, false);
+function showEmoteCommand(url) {
+    let emote = new Emote(url, 128, 128);
     emote.setRandomPosition();
     emote.show();
 }

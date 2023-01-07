@@ -1,14 +1,22 @@
-var EmoteWebSocket = require("ws");
-var client_socket = new EmoteWebSocket('ws://localhost:3000/');
-client_socket.on("open", function () {
-    client_socket.send("hello");
-});
-client_socket.on("message", function (data, flags) {
-    console.log('Server said: ' + data);
-});
-window.addEventListener("click", showEmoteCommand, false);
-function showEmoteCommand() {
-    var emote = new Emote("../media/images/KEKW.png", 128, 128);
+window.onload = function () { return connect_to_server(); };
+function connect_to_server() {
+    var socket;
+    socket = new WebSocket('ws://localhost:3000');
+    socket.onmessage = function (event) {
+        console.log("received message:");
+        console.log(event.data);
+        //let img = document.createElement("img");
+        //img.src = event.data;
+        //document.body.appendChild(img);
+        showEmoteCommand(event.data);
+    };
+    socket.onopen = function (event) { return console.log("connected"); };
+    socket.onclose = function (event) { return console.log("closed"); };
+    socket.onerror = function (event) { return console.log("error"); };
+}
+//window.addEventListener("click", showEmoteCommand, false);
+function showEmoteCommand(url) {
+    var emote = new Emote(url, 128, 128);
     emote.setRandomPosition();
     emote.show();
 }

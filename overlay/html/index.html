@@ -4,35 +4,7 @@
     <meta charset="UTF-8">
     <title>TypeScript: Hello, World!</title>
     <link href="../css/emotewall.css" rel="stylesheet">
-    <script type="text/javascript">
-
-        let socket;
-
-        function connect_to_server() {
-            socket = new WebSocket('ws://localhost:3000');
-
-            socket.onmessage = (event) => {
-                console.log("received message:")
-                console.log(event.data);
-                let img = document.createElement("img");
-                img.src = event.data;
-                document.body.appendChild(img);
-            };
-
-            socket.onopen = (event) => console.log("connected");
-            socket.onclose = (event) => console.log("closed");
-            socket.onerror = (event) => console.log("error");
-        }
-    </script>
+    <script src="../scripts/emoteWall.js"></script>
 </head>
-<body id="body">
-    <!--<script src="../scripts/emoteWall.js"></script>-->
-
-    <b id="txtfield">this a text</b>
-
-
-    <script>
-        window.onload = connect_to_server();
-    </script>
-</body>
+<body id="body"></body>
 </html>
