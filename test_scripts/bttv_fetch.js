@@ -1,3 +1,18 @@
+var __extends = (this && this.__extends) || (function () {
+    var extendStatics = function (d, b) {
+        extendStatics = Object.setPrototypeOf ||
+            ({ __proto__: [] } instanceof Array && function (d, b) { d.__proto__ = b; }) ||
+            function (d, b) { for (var p in b) if (Object.prototype.hasOwnProperty.call(b, p)) d[p] = b[p]; };
+        return extendStatics(d, b);
+    };
+    return function (d, b) {
+        if (typeof b !== "function" && b !== null)
+            throw new TypeError("Class extends value " + String(b) + " is not a constructor or null");
+        extendStatics(d, b);
+        function __() { this.constructor = d; }
+        d.prototype = b === null ? Object.create(b) : (__.prototype = b.prototype, new __());
+    };
+})();
 var __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, generator) {
     function adopt(value) { return value instanceof P ? value : new P(function (resolve) { resolve(value); }); }
     return new (P || (P = Promise))(function (resolve, reject) {
@@ -43,42 +58,10 @@ var __spreadArray = (this && this.__spreadArray) || function (to, from, pack) {
     }
     return to.concat(ar || Array.prototype.slice.call(from));
 };
-var _this = this;
-function saveToRecordGlobal(data) {
-    var bttv_global_emotes = {};
-    for (var _i = 0, data_1 = data; _i < data_1.length; _i++) {
-        var entry = data_1[_i];
-        bttv_global_emotes[entry['code']] = entry['id'];
-    }
-    console.log(bttv_global_emotes);
-    return bttv_global_emotes;
-}
-function download_global_bttv_emote() {
+function downloadEmotes(url) {
     return __awaiter(this, void 0, void 0, function () {
         return __generator(this, function (_a) {
-            return [2 /*return*/, fetch('https://api.betterttv.net/3/cached/emotes/global', {
-                    method: 'GET',
-                    headers: {
-                        'Content-Type': 'application/json; charset=utf-8',
-                        'User-agent': 'vscode-client'
-                    }
-                })];
-        });
-    });
-}
-function saveToRecordUser(data) {
-    var bttv_user_emotes = {};
-    for (var _i = 0, _a = __spreadArray(__spreadArray([], data['channelEmotes'], true), data['sharedEmotes'], true); _i < _a.length; _i++) {
-        var entry = _a[_i];
-        bttv_user_emotes[entry['code']] = entry['id'];
-    }
-    console.log(bttv_user_emotes);
-    return bttv_user_emotes;
-}
-function download_user_bttv_emotes(user_id) {
-    return __awaiter(this, void 0, void 0, function () {
-        return __generator(this, function (_a) {
-            return [2 /*return*/, fetch("https://api.betterttv.net/3/cached/users/twitch/".concat(user_id), {
+            return [2 /*return*/, fetch(url, {
                     method: 'GET',
                     headers: {
                         'Content-Type': 'application/json; charset=utf-8',
@@ -90,37 +73,96 @@ function download_user_bttv_emotes(user_id) {
 }
 // twitch broadcaster id -> NOT bttv user id
 var USER_ID = '112465769';
-var request_global = function () { return __awaiter(_this, void 0, void 0, function () {
-    var response, json;
-    return __generator(this, function (_a) {
-        switch (_a.label) {
-            case 0: return [4 /*yield*/, download_global_bttv_emote()];
-            case 1:
-                response = _a.sent();
-                return [4 /*yield*/, response.json()];
-            case 2:
-                json = _a.sent();
-                console.log(json);
-                return [2 /*return*/, saveToRecordGlobal(json)];
-        }
+function request_emotes(url) {
+    return __awaiter(this, void 0, void 0, function () {
+        var response;
+        return __generator(this, function (_a) {
+            switch (_a.label) {
+                case 0: return [4 /*yield*/, downloadEmotes(url)];
+                case 1:
+                    response = _a.sent();
+                    return [4 /*yield*/, response.json()];
+                case 2: return [2 /*return*/, _a.sent()];
+            }
+        });
     });
-}); };
-var request_user = function () { return __awaiter(_this, void 0, void 0, function () {
-    var response, json;
-    return __generator(this, function (_a) {
-        switch (_a.label) {
-            case 0: return [4 /*yield*/, download_user_bttv_emotes(USER_ID)];
-            case 1:
-                response = _a.sent();
-                return [4 /*yield*/, response.json()];
-            case 2:
-                json = _a.sent();
-                console.log(json);
-                return [2 /*return*/, saveToRecordUser(json)];
+}
+var EmoteContainer = /** @class */ (function () {
+    function EmoteContainer(emote_source, emote_url) {
+        this.emote_source = emote_source;
+        this.emote_url = emote_url;
+    }
+    return EmoteContainer;
+}());
+var BTTV_GLOBAL_CONTAINER = /** @class */ (function (_super) {
+    __extends(BTTV_GLOBAL_CONTAINER, _super);
+    function BTTV_GLOBAL_CONTAINER(emote_source, emote_url) {
+        return _super.call(this, emote_source, emote_url) || this;
+    }
+    BTTV_GLOBAL_CONTAINER.prototype.saveAsRecord = function (data) {
+        var record = {};
+        for (var _i = 0, data_1 = data; _i < data_1.length; _i++) {
+            var entry = data_1[_i];
+            record[entry['code']] = entry['id'];
         }
+        this.emote_record = record;
+        return record;
+    };
+    return BTTV_GLOBAL_CONTAINER;
+}(EmoteContainer));
+var BTTV_USER_CONTAINER = /** @class */ (function (_super) {
+    __extends(BTTV_USER_CONTAINER, _super);
+    function BTTV_USER_CONTAINER(emote_source, emote_url) {
+        return _super.call(this, emote_source, emote_url) || this;
+    }
+    BTTV_USER_CONTAINER.prototype.saveAsRecord = function (data) {
+        //console.log([...data['channelEmotes'], ...data['sharedEmotes']]);
+        var record = {};
+        for (var _i = 0, _a = __spreadArray(__spreadArray([], data['channelEmotes'], true), data['sharedEmotes'], true); _i < _a.length; _i++) {
+            var entry = _a[_i];
+            record[entry['code']] = entry['id'];
+        }
+        this.emote_record = record;
+        return record;
+    };
+    return BTTV_USER_CONTAINER;
+}(EmoteContainer));
+function createEmoteContainer(emote_source, emote_url) {
+    var new_emote_container;
+    switch (emote_source) {
+        case 'BTTV_GLOBAL':
+            new_emote_container = new BTTV_GLOBAL_CONTAINER(emote_source, emote_url);
+            break;
+        case 'BTTV_USER':
+            new_emote_container = new BTTV_USER_CONTAINER(emote_source, emote_url);
+            break;
+    }
+    return new_emote_container;
+}
+var emote_urls = {
+    'BTTV_GLOBAL': 'https://api.betterttv.net/3/cached/emotes/global',
+    'BTTV_USER': "https://api.betterttv.net/3/cached/users/twitch/".concat(USER_ID)
+};
+var emote_containers = [];
+for (var emote_source in emote_urls) {
+    console.log("source: ".concat(emote_source, " - url: ").concat(emote_urls[emote_source]));
+    emote_containers.push(createEmoteContainer(emote_source, emote_urls[emote_source]));
+}
+var _loop_1 = function (container) {
+    console.log(container.emote_url);
+    request_emotes(container.emote_url)
+        .then(function (json) {
+        container.saveAsRecord(json);
+        console.log(container.emote_record);
     });
-}); };
-//console.log(request_global());
-console.log(request_user());
-// bttv emote url: https://cdn.betterttv.net/emote/{id}/3x
-// oiduh bttv user id: 598f2a195aba4636b7359f44
+};
+for (var _i = 0, emote_containers_1 = emote_containers; _i < emote_containers_1.length; _i++) {
+    var container = emote_containers_1[_i];
+    _loop_1(container);
+}
+for (var _a = 0, emote_containers_2 = emote_containers; _a < emote_containers_2.length; _a++) {
+    var container = emote_containers_2[_a];
+    console.log(container.emote_record);
+}
+//let u = 'https://api.betterttv.net/3/cached/emotes/global';
+//console.log(request_emotes(u));
