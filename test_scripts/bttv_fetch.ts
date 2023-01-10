@@ -1,4 +1,23 @@
-async function downloadEmotes(url: string): Promise<any> {
+require("dotenv").config();
+
+///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+// VARIABLES
+//
+// 1) source of emotes as type -> bttv, frankerz, 7tv, ...
+// 2) record of source with its url to fetch from
+//
+// TODO: add more sources
+///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+
+export type EmoteSource = 'BTTV_GLOBAL' | 'BTTV_USER';
+export let EMOTE_URLS: Record<EmoteSource, string> = {
+    'BTTV_GLOBAL': 'https://api.betterttv.net/3/cached/emotes/global',
+    'BTTV_USER': `https://api.betterttv.net/3/cached/users/twitch/${process.env.TWITCH_BROADCASTER_ID}`
+};
+
+
+
+async function fetchEmoteUrl(url: string): Promise<any> {
     return fetch(url, {
         method: 'GET',
         headers: {
@@ -8,20 +27,13 @@ async function downloadEmotes(url: string): Promise<any> {
     });
 }
 
-// twitch broadcaster id -> NOT bttv user id
-const USER_ID = '112465769';
-
-async function request_emotes(url) {
-    const response = await downloadEmotes(url);
+export async function downloadEmoteCodes(url) {
+    const response = await fetchEmoteUrl(url);
     return await response.json();
 }
 
-// bttv emote url: https://cdn.betterttv.net/emote/{id}/3x
-// oiduh bttv user id: 598f2a195aba4636b7359f44
 
-type EmoteSource = 'BTTV_GLOBAL' | 'BTTV_USER';
-
-abstract class EmoteContainer {
+export abstract class EmoteContainer {
     emote_source: EmoteSource;
     emote_url: string;
     emote_record: Record<string, string>;
@@ -55,7 +67,6 @@ class BTTV_USER_CONTAINER extends EmoteContainer {
     }
 
     saveAsRecord(data: Record<string, any>): Record<string, string> {
-        //console.log([...data['channelEmotes'], ...data['sharedEmotes']]);
         let record: Record<string, string> = {};
         for(const entry of [...data['channelEmotes'], ...data['sharedEmotes']]) {
             record[entry['code']] = entry['id'];
@@ -65,8 +76,8 @@ class BTTV_USER_CONTAINER extends EmoteContainer {
     }
 }
 
-function createEmoteContainer(emote_source: EmoteSource, emote_url: string): EmoteContainer {
-    let new_emote_container:EmoteContainer;
+export function createEmoteContainer(emote_source: EmoteSource, emote_url: string): EmoteContainer {
+    let new_emote_container: EmoteContainer;
 
     switch (emote_source) {
         case 'BTTV_GLOBAL':
@@ -80,12 +91,7 @@ function createEmoteContainer(emote_source: EmoteSource, emote_url: string): Emo
     return new_emote_container;
 }
 
-let emote_urls: Record<EmoteSource, string> = {
-    'BTTV_GLOBAL': 'https://api.betterttv.net/3/cached/emotes/global',
-    'BTTV_USER': `https://api.betterttv.net/3/cached/users/twitch/${USER_ID}`
-};
-
-let emote_containers: Array<EmoteContainer> = [];
+/*let emote_containers: Array<EmoteContainer> = [];
 
 for(const emote_source in emote_urls) {
     console.log(`source: ${emote_source} - url: ${emote_urls[emote_source]}`);
@@ -93,17 +99,16 @@ for(const emote_source in emote_urls) {
 }
 for(const container of emote_containers) {
     console.log(container.emote_url);
-    request_emotes(container.emote_url)
+    downloadEmoteCodes(container.emote_url)
         .then(json => {
             container.saveAsRecord(json);
             console.log(container.emote_record);
         })
-}
+}*/
 
-for(const container of emote_containers) {
-    console.log(container.emote_record);
-}
 
 //let u = 'https://api.betterttv.net/3/cached/emotes/global';
 //console.log(request_emotes(u));
 
+// bttv emote url: https://cdn.betterttv.net/emote/{id}/3x
+// oiduh bttv user id: 598f2a195aba4636b7359f44

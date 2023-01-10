@@ -1,3 +1,4 @@
+"use strict";
 var __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, generator) {
     function adopt(value) { return value instanceof P ? value : new P(function (resolve) { resolve(value); }); }
     return new (P || (P = Promise))(function (resolve, reject) {
@@ -34,16 +35,13 @@ var __generator = (this && this.__generator) || function (thisArg, body) {
         if (op[0] & 5) throw op[1]; return { value: op[0] ? op[1] : void 0, done: true };
     }
 };
-var _this = this;
+exports.__esModule = true;
 var ChatServer = require("ws").Server;
 var tmi = require("tmi.js");
 require("dotenv").config();
-var EmoteMode;
-(function (EmoteMode) {
-    EmoteMode[EmoteMode["FIRST"] = 0] = "FIRST";
-    EmoteMode[EmoteMode["ALL"] = 1] = "ALL";
-})(EmoteMode || (EmoteMode = {}));
-var emote_mode = EmoteMode.FIRST;
+var bttv_fetch_1 = require("../test_scripts/bttv_fetch");
+// TODO: emotes are sorted by id and not by position in message -> fix
+// TODO: add command -> mod, broadcaster only -> to change emote mode
 var server = new ChatServer({ port: 3000 });
 var client = new tmi.Client({
     options: {
@@ -60,7 +58,7 @@ var client = new tmi.Client({
     channels: ['oiduh']
 });
 var emoteWall;
-server.on("connection", function (ws) { return __awaiter(_this, void 0, void 0, function () {
+server.on("connection", function (ws) { return __awaiter(void 0, void 0, void 0, function () {
     return __generator(this, function (_a) {
         switch (_a.label) {
             case 0:
@@ -73,9 +71,44 @@ server.on("connection", function (ws) { return __awaiter(_this, void 0, void 0, 
         }
     });
 }); });
+// initialize all important features
+// 1) load bttv emotes
+// ...
+client.on("connected", function () { return __awaiter(void 0, void 0, void 0, function () {
+    var _a, _b, _c, _i, x, y, z;
+    return __generator(this, function (_d) {
+        switch (_d.label) {
+            case 0:
+                console.log("connected to twitch chat!");
+                _a = bttv_fetch_1.emote_urls;
+                _b = [];
+                for (_c in _a)
+                    _b.push(_c);
+                _i = 0;
+                _d.label = 1;
+            case 1:
+                if (!(_i < _b.length)) return [3 /*break*/, 4];
+                _c = _b[_i];
+                if (!(_c in _a)) return [3 /*break*/, 3];
+                x = _c;
+                console.log("".concat(x, " - ").concat(bttv_fetch_1.emote_urls[x]));
+                y = (0, bttv_fetch_1.createEmoteContainer)(x, bttv_fetch_1.emote_urls[x]);
+                return [4 /*yield*/, (0, bttv_fetch_1.downloadEmoteCodes)(y.emote_url)];
+            case 2:
+                z = _d.sent();
+                y.saveAsRecord(z);
+                console.log(y.emote_record);
+                _d.label = 3;
+            case 3:
+                _i++;
+                return [3 /*break*/, 1];
+            case 4: return [2 /*return*/];
+        }
+    });
+}); });
 client.connect();
-client.on('message', function (channel, tags, message, self) { return __awaiter(_this, void 0, void 0, function () {
-    var emote_url, emotes_record, emote_id, full_emote_url, total_emotes, i;
+client.on('message', function (channel, tags, message, self) { return __awaiter(void 0, void 0, void 0, function () {
+    var emotes_record;
     return __generator(this, function (_a) {
         if (self)
             return [2 /*return*/];
@@ -83,35 +116,24 @@ client.on('message', function (channel, tags, message, self) { return __awaiter(
             client.say(channel, "@".concat(tags.username, ", hello!"));
         }
         else {
-            emote_url = "https://static-cdn.jtvnw.net/emoticons/v2/";
-            emotes_record = void 0;
-            if (emote_mode === EmoteMode.FIRST) {
-                emotes_record = Object.fromEntries(Object.entries(tags["emotes"]).slice(0, 1));
-            }
-            else if (emote_mode === EmoteMode.ALL) {
-                emotes_record = tags["emotes"];
-            }
-            for (emote_id in emotes_record) {
-                full_emote_url = emote_url + emote_id + "/default/dark/3.0";
+            emotes_record = tags["emotes"];
+            console.log(emotes_record);
+            /*for(const emote_id in emotes_record) {
+                let full_emote_url = emote_url + emote_id + "/default/dark/3.0";
                 console.log(full_emote_url);
                 try {
-                    total_emotes = void 0;
-                    if (emote_mode === EmoteMode.FIRST) {
-                        total_emotes = 1;
-                    }
-                    else if (emote_mode === EmoteMode.ALL) {
-                        total_emotes = emotes_record[emote_id].length;
-                    }
-                    for (i = 0; i < total_emotes; i++) {
+                    let total_emotes = emotes_record[emote_id].length;
+                    for(let i = 0; i < total_emotes; i++) {
                         emoteWall.send(full_emote_url);
                     }
                 }
                 catch (e) {
                     console.log(e);
                 }
-            }
+    
+            }*/
             console.log('---');
-            console.log(tags);
+            console.log(message);
             console.log('---');
         }
         return [2 /*return*/];
