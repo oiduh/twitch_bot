@@ -24,12 +24,14 @@ const client = new tmi.Client({
     channels: ['oiduh']
 });
 
-let emoteWall;
+let emote_wall;
+// TODO: redefine record if emotes from other sources are added -> distinguish source, currently not the case
+let emote_record: Record<string, string> = {};
 
 server.on("connection", async (ws) => {
     console.log("new connection");
-    emoteWall = await ws;
-    emoteWall.on("message", (data) => console.log(data));
+    emote_wall = await ws;
+    emote_wall.on("message", (data) => console.log(data));
 });
 
 // initialize all important features
@@ -38,14 +40,13 @@ server.on("connection", async (ws) => {
 client.on("connected", async () => {
     console.log("connected to twitch chat!");
 
-    // TODO: make it even easier -> 1 function to download all -> additionally command to refresh
-    for(const url_it in Emotes.EMOTE_URLS) {
-        console.log(`${url_it} - ${Emotes.EMOTE_URLS[url_it]}`);
-        let new_emote_container = Emotes.createEmoteContainer(url_it as Emotes.EmoteSource, Emotes.EMOTE_URLS[url_it]);
-        let emotes_json = await Emotes.downloadEmoteCodes(new_emote_container.emote_url);
-        new_emote_container.saveAsRecord(emotes_json);
-        console.log(new_emote_container.emote_record);
+    let emote_containers: Array<Emotes.EmoteContainer> = await Emotes.fetAllEmotes();
+    for(const emote_container of emote_containers) {
+        //console.log(emote_container.constructor.name);
+        //console.log(Object.keys(emote_container.emote_record));
+        emote_record = {...emote_record, ...emote_container.emote_record};
     }
+    console.log(emote_record);
 })
 
 
@@ -61,27 +62,18 @@ client.on('message', async (channel, tags, message, self) => {
         // TODO: for now lets identify all global twitch emotes only
 
         //let emote_url = "https://static-cdn.jtvnw.net/emoticons/v2/"
-
-        let emotes_record = tags["emotes"];
-        console.log(emotes_record);
-
-        /*for(const emote_id in emotes_record) {
-            let full_emote_url = emote_url + emote_id + "/default/dark/3.0";
-            console.log(full_emote_url);
-            try {
-                let total_emotes = emotes_record[emote_id].length;
-                for(let i = 0; i < total_emotes; i++) {
-                    emoteWall.send(full_emote_url);
-                }
-            }
-            catch (e) {
-                console.log(e);
-            }
-
-        }*/
-
-        console.log('---');
+        let twitch_emotes = tags["emotes"];
+        console.log('emotes:');
+        console.log(twitch_emotes);
+        console.log('raw message:');
         console.log(message);
+        let splitted = message.split(" ")
+        console.log('raw message:');
+        console.log(splitted);
+        let emote_codes = Object.keys(emote_record);
+        let intersection = splitted.filter(x => emote_codes.includes(x));
+        console.log('intersection:');
+        console.log(intersection);
         console.log('---');
     }
 });

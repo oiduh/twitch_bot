@@ -1,4 +1,15 @@
 "use strict";
+var __assign = (this && this.__assign) || function () {
+    __assign = Object.assign || function(t) {
+        for (var s, i = 1, n = arguments.length; i < n; i++) {
+            s = arguments[i];
+            for (var p in s) if (Object.prototype.hasOwnProperty.call(s, p))
+                t[p] = s[p];
+        }
+        return t;
+    };
+    return __assign.apply(this, arguments);
+};
 var __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, generator) {
     function adopt(value) { return value instanceof P ? value : new P(function (resolve) { resolve(value); }); }
     return new (P || (P = Promise))(function (resolve, reject) {
@@ -39,7 +50,7 @@ exports.__esModule = true;
 var ChatServer = require("ws").Server;
 var tmi = require("tmi.js");
 require("dotenv").config();
-var bttv_fetch_1 = require("../test_scripts/bttv_fetch");
+var Emotes = require("../test_scripts/bttv_fetch");
 // TODO: emotes are sorted by id and not by position in message -> fix
 // TODO: add command -> mod, broadcaster only -> to change emote mode
 var server = new ChatServer({ port: 3000 });
@@ -57,7 +68,9 @@ var client = new tmi.Client({
     },
     channels: ['oiduh']
 });
-var emoteWall;
+var emote_wall;
+// TODO: redefine record if emotes from other sources are added -> distinguish source, currently not the case
+var emote_record = {};
 server.on("connection", function (ws) { return __awaiter(void 0, void 0, void 0, function () {
     return __generator(this, function (_a) {
         switch (_a.label) {
@@ -65,8 +78,8 @@ server.on("connection", function (ws) { return __awaiter(void 0, void 0, void 0,
                 console.log("new connection");
                 return [4 /*yield*/, ws];
             case 1:
-                emoteWall = _a.sent();
-                emoteWall.on("message", function (data) { return console.log(data); });
+                emote_wall = _a.sent();
+                emote_wall.on("message", function (data) { return console.log(data); });
                 return [2 /*return*/];
         }
     });
@@ -75,40 +88,28 @@ server.on("connection", function (ws) { return __awaiter(void 0, void 0, void 0,
 // 1) load bttv emotes
 // ...
 client.on("connected", function () { return __awaiter(void 0, void 0, void 0, function () {
-    var _a, _b, _c, _i, x, y, z;
-    return __generator(this, function (_d) {
-        switch (_d.label) {
+    var emote_containers, _i, emote_containers_1, emote_container;
+    return __generator(this, function (_a) {
+        switch (_a.label) {
             case 0:
                 console.log("connected to twitch chat!");
-                _a = bttv_fetch_1.emote_urls;
-                _b = [];
-                for (_c in _a)
-                    _b.push(_c);
-                _i = 0;
-                _d.label = 1;
+                return [4 /*yield*/, Emotes.fetAllEmotes()];
             case 1:
-                if (!(_i < _b.length)) return [3 /*break*/, 4];
-                _c = _b[_i];
-                if (!(_c in _a)) return [3 /*break*/, 3];
-                x = _c;
-                console.log("".concat(x, " - ").concat(bttv_fetch_1.emote_urls[x]));
-                y = (0, bttv_fetch_1.createEmoteContainer)(x, bttv_fetch_1.emote_urls[x]);
-                return [4 /*yield*/, (0, bttv_fetch_1.downloadEmoteCodes)(y.emote_url)];
-            case 2:
-                z = _d.sent();
-                y.saveAsRecord(z);
-                console.log(y.emote_record);
-                _d.label = 3;
-            case 3:
-                _i++;
-                return [3 /*break*/, 1];
-            case 4: return [2 /*return*/];
+                emote_containers = _a.sent();
+                for (_i = 0, emote_containers_1 = emote_containers; _i < emote_containers_1.length; _i++) {
+                    emote_container = emote_containers_1[_i];
+                    //console.log(emote_container.constructor.name);
+                    //console.log(Object.keys(emote_container.emote_record));
+                    emote_record = __assign(__assign({}, emote_record), emote_container.emote_record);
+                }
+                console.log(emote_record);
+                return [2 /*return*/];
         }
     });
 }); });
 client.connect();
 client.on('message', function (channel, tags, message, self) { return __awaiter(void 0, void 0, void 0, function () {
-    var emotes_record;
+    var twitch_emotes, splitted, emote_codes_1, intersection;
     return __generator(this, function (_a) {
         if (self)
             return [2 /*return*/];
@@ -116,24 +117,20 @@ client.on('message', function (channel, tags, message, self) { return __awaiter(
             client.say(channel, "@".concat(tags.username, ", hello!"));
         }
         else {
-            emotes_record = tags["emotes"];
-            console.log(emotes_record);
-            /*for(const emote_id in emotes_record) {
-                let full_emote_url = emote_url + emote_id + "/default/dark/3.0";
-                console.log(full_emote_url);
-                try {
-                    let total_emotes = emotes_record[emote_id].length;
-                    for(let i = 0; i < total_emotes; i++) {
-                        emoteWall.send(full_emote_url);
-                    }
-                }
-                catch (e) {
-                    console.log(e);
-                }
-    
-            }*/
-            console.log('---');
+            twitch_emotes = tags["emotes"];
+            console.log('emotes:');
+            console.log(twitch_emotes);
+            console.log('raw message:');
             console.log(message);
+            splitted = message.split(" ");
+            console.log('raw message:');
+            console.log(splitted);
+            emote_codes_1 = Object.keys(emote_record);
+            console.log('emote codes:');
+            console.log(emote_codes_1);
+            intersection = splitted.filter(function (x) { return emote_codes_1.includes(x); });
+            console.log('intersection:');
+            console.log(intersection);
             console.log('---');
         }
         return [2 /*return*/];

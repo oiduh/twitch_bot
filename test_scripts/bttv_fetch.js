@@ -60,8 +60,20 @@ var __spreadArray = (this && this.__spreadArray) || function (to, from, pack) {
     return to.concat(ar || Array.prototype.slice.call(from));
 };
 exports.__esModule = true;
-exports.emote_urls = exports.createEmoteContainer = exports.EmoteContainer = exports.downloadEmoteCodes = void 0;
+exports.fetAllEmotes = exports.EmoteContainer = void 0;
 require("dotenv").config();
+///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+// VARIABLES
+//
+// 1) source of emotes as type -> bttv, frankerz, 7tv, ...
+// 2) record of source with its url to fetch from
+//
+// TODO: add more sources
+///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+var EMOTE_URLS = {
+    'BTTV_GLOBAL': 'https://api.betterttv.net/3/cached/emotes/global',
+    'BTTV_USER': "https://api.betterttv.net/3/cached/users/twitch/".concat(process.env.TWITCH_BROADCASTER_ID)
+};
 function fetchEmoteUrl(url) {
     return __awaiter(this, void 0, void 0, function () {
         return __generator(this, function (_a) {
@@ -89,10 +101,8 @@ function downloadEmoteCodes(url) {
         });
     });
 }
-exports.downloadEmoteCodes = downloadEmoteCodes;
 var EmoteContainer = /** @class */ (function () {
-    function EmoteContainer(emote_source, emote_url) {
-        this.emote_source = emote_source;
+    function EmoteContainer(emote_url) {
         this.emote_url = emote_url;
     }
     return EmoteContainer;
@@ -100,8 +110,8 @@ var EmoteContainer = /** @class */ (function () {
 exports.EmoteContainer = EmoteContainer;
 var BTTV_GLOBAL_CONTAINER = /** @class */ (function (_super) {
     __extends(BTTV_GLOBAL_CONTAINER, _super);
-    function BTTV_GLOBAL_CONTAINER(emote_source, emote_url) {
-        return _super.call(this, emote_source, emote_url) || this;
+    function BTTV_GLOBAL_CONTAINER(emote_url) {
+        return _super.call(this, emote_url) || this;
     }
     BTTV_GLOBAL_CONTAINER.prototype.saveAsRecord = function (data) {
         var record = {};
@@ -116,8 +126,8 @@ var BTTV_GLOBAL_CONTAINER = /** @class */ (function (_super) {
 }(EmoteContainer));
 var BTTV_USER_CONTAINER = /** @class */ (function (_super) {
     __extends(BTTV_USER_CONTAINER, _super);
-    function BTTV_USER_CONTAINER(emote_source, emote_url) {
-        return _super.call(this, emote_source, emote_url) || this;
+    function BTTV_USER_CONTAINER(emote_url) {
+        return _super.call(this, emote_url) || this;
     }
     BTTV_USER_CONTAINER.prototype.saveAsRecord = function (data) {
         var record = {};
@@ -134,33 +144,48 @@ function createEmoteContainer(emote_source, emote_url) {
     var new_emote_container;
     switch (emote_source) {
         case 'BTTV_GLOBAL':
-            new_emote_container = new BTTV_GLOBAL_CONTAINER(emote_source, emote_url);
+            new_emote_container = new BTTV_GLOBAL_CONTAINER(emote_url);
             break;
         case 'BTTV_USER':
-            new_emote_container = new BTTV_USER_CONTAINER(emote_source, emote_url);
+            new_emote_container = new BTTV_USER_CONTAINER(emote_url);
             break;
     }
     return new_emote_container;
 }
-exports.createEmoteContainer = createEmoteContainer;
-exports.emote_urls = {
-    'BTTV_GLOBAL': 'https://api.betterttv.net/3/cached/emotes/global',
-    'BTTV_USER': "https://api.betterttv.net/3/cached/users/twitch/".concat(process.env.TWITCH_BROADCASTER_ID)
-};
-/*let emote_containers: Array<EmoteContainer> = [];
-
-for(const emote_source in emote_urls) {
-    console.log(`source: ${emote_source} - url: ${emote_urls[emote_source]}`);
-    emote_containers.push(createEmoteContainer(emote_source as EmoteSource, emote_urls[emote_source]));
+function fetAllEmotes() {
+    return __awaiter(this, void 0, void 0, function () {
+        var emote_containers, _a, _b, _c, _i, emote_source, new_emote_container, emotes_json;
+        return __generator(this, function (_d) {
+            switch (_d.label) {
+                case 0:
+                    emote_containers = [];
+                    _a = EMOTE_URLS;
+                    _b = [];
+                    for (_c in _a)
+                        _b.push(_c);
+                    _i = 0;
+                    _d.label = 1;
+                case 1:
+                    if (!(_i < _b.length)) return [3 /*break*/, 4];
+                    _c = _b[_i];
+                    if (!(_c in _a)) return [3 /*break*/, 3];
+                    emote_source = _c;
+                    new_emote_container = createEmoteContainer(emote_source, EMOTE_URLS[emote_source]);
+                    return [4 /*yield*/, downloadEmoteCodes(new_emote_container.emote_url)];
+                case 2:
+                    emotes_json = _d.sent();
+                    new_emote_container.saveAsRecord(emotes_json);
+                    emote_containers.push(new_emote_container);
+                    _d.label = 3;
+                case 3:
+                    _i++;
+                    return [3 /*break*/, 1];
+                case 4: return [2 /*return*/, emote_containers];
+            }
+        });
+    });
 }
-for(const container of emote_containers) {
-    console.log(container.emote_url);
-    downloadEmoteCodes(container.emote_url)
-        .then(json => {
-            container.saveAsRecord(json);
-            console.log(container.emote_record);
-        })
-}*/
+exports.fetAllEmotes = fetAllEmotes;
 //let u = 'https://api.betterttv.net/3/cached/emotes/global';
 //console.log(request_emotes(u));
 // bttv emote url: https://cdn.betterttv.net/emote/{id}/3x
