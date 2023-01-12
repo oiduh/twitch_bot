@@ -14,11 +14,10 @@ function connect_to_server() {
     socket.onclose = function (event) { return console.log("closed"); };
     socket.onerror = function (event) { return console.log("error"); };
 }
-//window.addEventListener("click", showEmoteCommand, false);
 function showEmoteCommand(url) {
-    var emote = new Emote(url, 128, 128);
-    emote.setRandomPosition();
-    emote.show();
+    new Emote(url, 128, 128)
+        .setRandomPosition()
+        .show();
 }
 var Emote = /** @class */ (function () {
     function Emote(url, height, width) {
@@ -26,6 +25,7 @@ var Emote = /** @class */ (function () {
         this.height = height;
         this.width = width;
         this.createHTMLImage();
+        return this;
     }
     Emote.prototype.createHTMLImage = function () {
         var img = document.createElement("img");
@@ -43,6 +43,7 @@ var Emote = /** @class */ (function () {
         this.image.style.position = "absolute";
         this.image.style.top = "".concat(x, "px");
         this.image.style.left = "".concat(y, "px");
+        return this;
     };
     Emote.prototype.show = function () {
         var img = this.image;

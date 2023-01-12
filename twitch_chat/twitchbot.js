@@ -109,7 +109,7 @@ client.on("connected", function () { return __awaiter(void 0, void 0, void 0, fu
 }); });
 client.connect();
 client.on('message', function (channel, tags, message, self) { return __awaiter(void 0, void 0, void 0, function () {
-    var twitch_emotes, splitted, emote_codes_1, intersection;
+    var twitch_emotes, first_emote, emote_url;
     return __generator(this, function (_a) {
         if (self)
             return [2 /*return*/];
@@ -118,21 +118,37 @@ client.on('message', function (channel, tags, message, self) { return __awaiter(
         }
         else {
             twitch_emotes = tags["emotes"];
-            console.log('emotes:');
-            console.log(twitch_emotes);
-            console.log('raw message:');
-            console.log(message);
-            splitted = message.split(" ");
-            console.log('raw message:');
-            console.log(splitted);
-            emote_codes_1 = Object.keys(emote_record);
-            console.log('emote codes:');
-            console.log(emote_codes_1);
-            intersection = splitted.filter(function (x) { return emote_codes_1.includes(x); });
-            console.log('intersection:');
-            console.log(intersection);
-            console.log('---');
+            first_emote = getFirstEmote(message, twitch_emotes);
+            console.log("first emote is \"".concat(first_emote[1], "\" from ").concat(first_emote[0]));
+            emote_url = '';
+            switch (first_emote[0]) {
+                case 'BTTV':
+                    emote_url = "https://cdn.betterttv.net/emote/".concat(emote_record[first_emote[1]], "/3x");
+                    break;
+                case 'TWITCH':
+                    emote_url = "https://static-cdn.jtvnw.net/emoticons/v2/".concat(first_emote[1], "/default/light/3.0");
+                    break;
+            }
+            emote_wall.send(emote_url);
         }
         return [2 /*return*/];
     });
 }); });
+function getFirstEmote(message, twitch_emotes) {
+    var message_split = message.split(' ');
+    var bttv_emote_codes = Object.keys(emote_record);
+    var first_bttv_emote = message_split.filter(function (x) { return bttv_emote_codes.includes(x); })[0];
+    var bttv_emote_pos = message.indexOf(first_bttv_emote);
+    if (bttv_emote_pos < 0)
+        bttv_emote_pos = 500;
+    var first_twitch_emote = '';
+    var twitch_emote_pos = 500; // max char limit twitch message
+    for (var emote in twitch_emotes) {
+        var pos = twitch_emotes[emote][0].split('-')[0];
+        if (pos < twitch_emote_pos) {
+            first_twitch_emote = emote;
+            twitch_emote_pos = pos;
+        }
+    }
+    return bttv_emote_pos < twitch_emote_pos ? ['BTTV', first_bttv_emote] : ['TWITCH', first_twitch_emote];
+}

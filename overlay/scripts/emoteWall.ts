@@ -7,10 +7,6 @@ function connect_to_server() {
     socket.onmessage = (event) => {
         console.log("received message:")
         console.log(event.data);
-        //let img = document.createElement("img");
-        //img.src = event.data;
-        //document.body.appendChild(img);
-
         showEmoteCommand(event.data);
     };
 
@@ -19,11 +15,10 @@ function connect_to_server() {
     socket.onerror = (event) => console.log("error");
 }
 
-//window.addEventListener("click", showEmoteCommand, false);
-function showEmoteCommand(url) {
-    let emote = new Emote(url, 128, 128);
-    emote.setRandomPosition();
-    emote.show();
+function showEmoteCommand(url): void {
+    new Emote(url, 128, 128)
+        .setRandomPosition()
+        .show();
 }
 
 class Emote {
@@ -38,6 +33,8 @@ class Emote {
         this.width = width;
 
         this.createHTMLImage();
+
+        return this;
     }
 
     createHTMLImage(): void {
@@ -53,12 +50,13 @@ class Emote {
         this.image = img;
     }
 
-    setRandomPosition(): void {
+    setRandomPosition(): this {
         const x = Math.max(Math.floor(Math.random()*window.innerHeight) - this.height, 0),
             y = Math.max(Math.floor(Math.random()*window.innerWidth) - this.width, 0);
         this.image.style.position = "absolute";
         this.image.style.top = `${x}px`;
         this.image.style.left = `${y}px`;
+        return this;
     }
 
     show(): void {
