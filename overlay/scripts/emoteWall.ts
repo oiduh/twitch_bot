@@ -28,6 +28,10 @@ class Emote {
     image: HTMLImageElement;
 
     constructor(url: string, height: number, width: number) {
+
+        let test = new URL(url);
+        console.log(test.searchParams.get('children'));
+
         this.url = url;
         this.height = height;
         this.width = width;

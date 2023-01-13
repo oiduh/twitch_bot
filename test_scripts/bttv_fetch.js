@@ -72,7 +72,8 @@ require("dotenv").config();
 ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 var EMOTE_URLS = {
     'BTTV_GLOBAL': 'https://api.betterttv.net/3/cached/emotes/global',
-    'BTTV_USER': "https://api.betterttv.net/3/cached/users/twitch/".concat(process.env.TWITCH_BROADCASTER_ID)
+    'BTTV_USER': "https://api.betterttv.net/3/cached/users/twitch/".concat(process.env.TWITCH_BROADCASTER_ID),
+    'FFZ': "https://api.frankerfacez.com/v1/room/id/".concat(process.env.TWITCH_BROADCASTER_ID)
 };
 function fetchEmoteUrl(url) {
     return __awaiter(this, void 0, void 0, function () {
@@ -140,6 +141,24 @@ var BTTV_USER_CONTAINER = /** @class */ (function (_super) {
     };
     return BTTV_USER_CONTAINER;
 }(EmoteContainer));
+var FFZ_CONTAINER = /** @class */ (function (_super) {
+    __extends(FFZ_CONTAINER, _super);
+    function FFZ_CONTAINER(emote_url) {
+        return _super.call(this, emote_url) || this;
+    }
+    FFZ_CONTAINER.prototype.saveAsRecord = function (data) {
+        var record = {};
+        var room_set = data['room']['set'];
+        var emotes = data['sets'][room_set]['emoticons'];
+        for (var _i = 0, emotes_1 = emotes; _i < emotes_1.length; _i++) {
+            var emote = emotes_1[_i];
+            record[emote['name']] = emote['id'];
+        }
+        this.emote_record = record;
+        return record;
+    };
+    return FFZ_CONTAINER;
+}(EmoteContainer));
 function createEmoteContainer(emote_source, emote_url) {
     var new_emote_container;
     switch (emote_source) {
@@ -148,6 +167,9 @@ function createEmoteContainer(emote_source, emote_url) {
             break;
         case 'BTTV_USER':
             new_emote_container = new BTTV_USER_CONTAINER(emote_url);
+            break;
+        case 'FFZ':
+            new_emote_container = new FFZ_CONTAINER(emote_url);
             break;
     }
     return new_emote_container;
@@ -170,6 +192,9 @@ function fetAllEmotes() {
                     _c = _b[_i];
                     if (!(_c in _a)) return [3 /*break*/, 3];
                     emote_source = _c;
+                    console.log('------');
+                    console.log(emote_source);
+                    console.log(EMOTE_URLS[emote_source]);
                     new_emote_container = createEmoteContainer(emote_source, EMOTE_URLS[emote_source]);
                     return [4 /*yield*/, downloadEmoteCodes(new_emote_container.emote_url)];
                 case 2:
@@ -190,3 +215,28 @@ exports.fetAllEmotes = fetAllEmotes;
 //console.log(request_emotes(u));
 // bttv emote url: https://cdn.betterttv.net/emote/{id}/3x
 // oiduh bttv user id: 598f2a195aba4636b7359f44
+/*
+
+let fetch_ffz = async() => {
+    return await fetch(`https://api.frankerfacez.com/v1/room/id/${process.env.TWITCH_BROADCASTER_ID}`, {
+        method: 'GET',
+        headers: {
+            'Content-Type': 'application/json; charset=utf-8',
+            'User-agent': 'vscode-client'
+        }
+    });
+}
+
+fetch_ffz().then(res => res.json()).then(data => {
+    let room_set = data['room']['set'];
+    let emotes = data['sets'][room_set]['emoticons'];
+    let x = new FFZ_CONTAINER(`https://api.frankerfacez.com/v1/room/id/${process.env.TWITCH_BROADCASTER_ID}`);
+    x.saveAsRecord(emotes);
+    console.log(x);
+
+    for(const y in x.emote_record) {
+        console.log(`https://cdn.frankerfacez.com/emote/${x.emote_record[y]}/4`);
+    }
+});
+
+*/

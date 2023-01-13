@@ -5,9 +5,6 @@ function connect_to_server() {
     socket.onmessage = function (event) {
         console.log("received message:");
         console.log(event.data);
-        //let img = document.createElement("img");
-        //img.src = event.data;
-        //document.body.appendChild(img);
         showEmoteCommand(event.data);
     };
     socket.onopen = function (event) { return console.log("connected"); };
@@ -21,6 +18,8 @@ function showEmoteCommand(url) {
 }
 var Emote = /** @class */ (function () {
     function Emote(url, height, width) {
+        var test = new URL(url);
+        console.log(test.searchParams.get('children'));
         this.url = url;
         this.height = height;
         this.width = width;

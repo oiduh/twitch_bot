@@ -25,7 +25,7 @@ const client = new tmi.Client({
 
 let emote_wall;
 // TODO: redefine record if emotes from other sources are added -> distinguish source, currently not the case
-let emote_record: Record<string, string> = {};
+let emote_record: Record<string, Record<string, string>> = {};
 
 server.on("connection", async (ws) => {
     console.log("new connection");
@@ -41,7 +41,8 @@ client.on("connected", async () => {
 
     let emote_containers: Array<Emotes.EmoteContainer> = await Emotes.fetAllEmotes();
     for(const emote_container of emote_containers) {
-        emote_record = {...emote_record, ...emote_container.emote_record};
+        emote_record[emote_container.constructor.name] = emote_container.emote_record;
+        //emote_record = {...emote_record, ...emote_container.emote_record};
     }
     console.log(emote_record);
 })
@@ -65,37 +66,82 @@ client.on('message', async (channel, tags, message, self) => {
         let emote_url = '';
         switch(first_emote[0]) {
             case 'BTTV':
-                emote_url = `https://cdn.betterttv.net/emote/${emote_record[first_emote[1]]}/3x`;
+                let combine_bttv = {...emote_record['BTTV_GLOBAL_CONTAINER'], ...emote_record['BTTV_USER_CONTAINER']};
+                emote_url = `https://cdn.betterttv.net/emote/${combine_bttv[first_emote[1]]}/3x`;
+                break;
+            case 'FFZ':
+                emote_url = `https://cdn.frankerfacez.com/emote/${emote_record['FFZ_CONTAINER'][first_emote[1]]}/4`;
                 break;
             case 'TWITCH':
                 emote_url = `https://static-cdn.jtvnw.net/emoticons/v2/${first_emote[1]}/default/light/3.0`;
                 break;
         }
 
+        console.log(first_emote[1]);
+        console.log(emote_url);
+
         emote_wall.send(emote_url);
     }
 });
 
 function getFirstEmote(message: string, twitch_emotes: Record<string, Array<string>>): [string, string] {
+    type emote_info = {
+        source: string,
+        position: number,
+        name: string,
+    }
     let message_split = message.split(' ');
 
-    let bttv_emote_codes = Object.keys(emote_record);
+    // get first bttv emote
+    let bttv_emote: emote_info = {
+        source: 'BTTV',
+        position: 500,
+        name: ''
 
-    let first_bttv_emote = message_split.filter(x => bttv_emote_codes.includes(x))[0];
-    let bttv_emote_pos = message.indexOf(first_bttv_emote);
-    if(bttv_emote_pos < 0)
-        bttv_emote_pos = 500;
+    }
+    let bttv_emote_codes = Object.keys({...emote_record['BTTV_GLOBAL_CONTAINER'], ...emote_record['BTTV_USER_CONTAINER']});
+    bttv_emote.name = message_split.filter(x => bttv_emote_codes.includes(x))[0];
+    bttv_emote.position = message.indexOf(bttv_emote.name);
+    if(bttv_emote.position < 0)
+        bttv_emote.position = 500;
 
-    let first_twitch_emote = '';
-    let twitch_emote_pos = 500;  // max char limit twitch message
+    // get first ffz emote
+    let ffz_emote: emote_info = {
+        source: 'FFZ',
+        position: 500,
+        name: ''
 
+    }
+    let ffz_emote_codes = Object.keys(emote_record['FFZ_CONTAINER']);
+    ffz_emote.name = message_split.filter(x => ffz_emote_codes.includes(x))[0];
+    ffz_emote.position = message.indexOf(ffz_emote.name);
+    if(ffz_emote.position < 0)
+        ffz_emote.position = 500;
+
+    // get first twitch emote
+    let twitch_emote: emote_info = {
+        source: 'TWITCH',
+        position: 500,
+        name: ''
+    }
     for(const emote in twitch_emotes) {
         let pos = twitch_emotes[emote][0].split('-')[0] as unknown as number;
-        if(pos < twitch_emote_pos) {
-            first_twitch_emote = emote;
-            twitch_emote_pos = pos;
+        if(pos < twitch_emote.position) {
+            twitch_emote.name = emote;
+            twitch_emote.position = pos;
         }
     }
 
-    return bttv_emote_pos < twitch_emote_pos ? ['BTTV', first_bttv_emote] : ['TWITCH', first_twitch_emote]
+    let first_emote: emote_info = {
+        source: '',
+        position: 500,
+        name: ''
+    };
+    for(const current_emote_info of [bttv_emote, ffz_emote, twitch_emote]) {
+        if(current_emote_info.position < first_emote.position) {
+            first_emote = current_emote_info
+        }
+    }
+
+    return [first_emote.source, first_emote.name]
 }

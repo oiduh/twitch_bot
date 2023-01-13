@@ -11,7 +11,8 @@ require("dotenv").config();
 
 let EMOTE_URLS: Record<string, string> = {
     'BTTV_GLOBAL': 'https://api.betterttv.net/3/cached/emotes/global',
-    'BTTV_USER': `https://api.betterttv.net/3/cached/users/twitch/${process.env.TWITCH_BROADCASTER_ID}`
+    'BTTV_USER': `https://api.betterttv.net/3/cached/users/twitch/${process.env.TWITCH_BROADCASTER_ID}`,
+    'FFZ': `https://api.frankerfacez.com/v1/room/id/${process.env.TWITCH_BROADCASTER_ID}`
 };
 
 
@@ -73,6 +74,23 @@ class BTTV_USER_CONTAINER extends EmoteContainer {
     }
 }
 
+class FFZ_CONTAINER extends EmoteContainer {
+    constructor(emote_url: string) {
+        super(emote_url);
+    }
+
+    saveAsRecord(data: Record<string, any>): Record<string, string> {
+        let record: Record<string, string> = {};
+        let room_set = data['room']['set'];
+        let emotes = data['sets'][room_set]['emoticons'];
+        for(let emote of emotes) {
+            record[emote['name']] = emote['id'] as string;
+        }
+        this.emote_record = record;
+        return record;
+    }
+}
+
 function createEmoteContainer(emote_source: string, emote_url: string): EmoteContainer {
     let new_emote_container: EmoteContainer;
 
@@ -83,6 +101,9 @@ function createEmoteContainer(emote_source: string, emote_url: string): EmoteCon
         case 'BTTV_USER':
             new_emote_container = new BTTV_USER_CONTAINER(emote_url);
             break;
+        case 'FFZ':
+            new_emote_container = new FFZ_CONTAINER(emote_url);
+            break;
     }
 
     return new_emote_container;
@@ -92,6 +113,9 @@ export async function fetAllEmotes(): Promise<any> {
     let emote_containers: Array<EmoteContainer> = [];
 
     for (const emote_source in EMOTE_URLS) {
+        console.log('------');
+        console.log(emote_source);
+        console.log(EMOTE_URLS[emote_source]);
         let new_emote_container = createEmoteContainer(emote_source, EMOTE_URLS[emote_source]);
         let emotes_json = await downloadEmoteCodes(new_emote_container.emote_url);
         new_emote_container.saveAsRecord(emotes_json);
@@ -106,3 +130,30 @@ export async function fetAllEmotes(): Promise<any> {
 
 // bttv emote url: https://cdn.betterttv.net/emote/{id}/3x
 // oiduh bttv user id: 598f2a195aba4636b7359f44
+
+
+/*
+
+let fetch_ffz = async() => {
+    return await fetch(`https://api.frankerfacez.com/v1/room/id/${process.env.TWITCH_BROADCASTER_ID}`, {
+        method: 'GET',
+        headers: {
+            'Content-Type': 'application/json; charset=utf-8',
+            'User-agent': 'vscode-client'
+        }
+    });
+}
+
+fetch_ffz().then(res => res.json()).then(data => {
+    let room_set = data['room']['set'];
+    let emotes = data['sets'][room_set]['emoticons'];
+    let x = new FFZ_CONTAINER(`https://api.frankerfacez.com/v1/room/id/${process.env.TWITCH_BROADCASTER_ID}`);
+    x.saveAsRecord(emotes);
+    console.log(x);
+
+    for(const y in x.emote_record) {
+        console.log(`https://cdn.frankerfacez.com/emote/${x.emote_record[y]}/4`);
+    }
+});
+
+*/
