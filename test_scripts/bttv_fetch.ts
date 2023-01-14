@@ -12,7 +12,8 @@ require("dotenv").config();
 let EMOTE_URLS: Record<string, string> = {
     'BTTV_GLOBAL': 'https://api.betterttv.net/3/cached/emotes/global',
     'BTTV_USER': `https://api.betterttv.net/3/cached/users/twitch/${process.env.TWITCH_BROADCASTER_ID}`,
-    'FFZ': `https://api.frankerfacez.com/v1/room/id/${process.env.TWITCH_BROADCASTER_ID}`
+    'FFZ': `https://api.frankerfacez.com/v1/room/id/${process.env.TWITCH_BROADCASTER_ID}`,
+    '7TV_GLOBAL': 'https://api.7tv.app/v2/emotes/global'
 };
 
 
@@ -33,7 +34,7 @@ async function downloadEmoteCodes(url) {
 }
 
 
-export abstract class EmoteContainer {
+export abstract class EMOTE_CONTAINER {
     emote_url: string;
     emote_record: Record<string, string>;
 
@@ -44,7 +45,7 @@ export abstract class EmoteContainer {
     abstract saveAsRecord(data: unknown): Record<string, string>;
 }
 
-class BTTV_GLOBAL_CONTAINER extends EmoteContainer {
+class BTTV_GLOBAL_CONTAINER extends EMOTE_CONTAINER {
     constructor(emote_url: string) {
         super(emote_url);
     }
@@ -59,7 +60,7 @@ class BTTV_GLOBAL_CONTAINER extends EmoteContainer {
     }
 }
 
-class BTTV_USER_CONTAINER extends EmoteContainer {
+class BTTV_USER_CONTAINER extends EMOTE_CONTAINER {
     constructor(emote_url: string) {
         super(emote_url);
     }
@@ -74,7 +75,7 @@ class BTTV_USER_CONTAINER extends EmoteContainer {
     }
 }
 
-class FFZ_CONTAINER extends EmoteContainer {
+class FFZ_CONTAINER extends EMOTE_CONTAINER {
     constructor(emote_url: string) {
         super(emote_url);
     }
@@ -91,8 +92,26 @@ class FFZ_CONTAINER extends EmoteContainer {
     }
 }
 
-function createEmoteContainer(emote_source: string, emote_url: string): EmoteContainer {
-    let new_emote_container: EmoteContainer;
+class SEVENTV_GLOBAL_CONTAINER extends EMOTE_CONTAINER {
+    constructor(emote_url: string) {
+        super(emote_url);
+    }
+
+    saveAsRecord(data: Array<Record<string, any>>): Record<string, string> {
+        let record: Record<string, string> = {};
+
+        for(let emote of data) {
+            record[emote['name']] = emote['id'] as string;
+        }
+
+        this.emote_record = record;
+        return record;
+    }
+
+}
+
+function createEmoteContainer(emote_source: string, emote_url: string): EMOTE_CONTAINER {
+    let new_emote_container: EMOTE_CONTAINER;
 
     switch (emote_source) {
         case 'BTTV_GLOBAL':
@@ -104,13 +123,16 @@ function createEmoteContainer(emote_source: string, emote_url: string): EmoteCon
         case 'FFZ':
             new_emote_container = new FFZ_CONTAINER(emote_url);
             break;
+        case '7TV_GLOBAL':
+            new_emote_container = new SEVENTV_GLOBAL_CONTAINER(emote_url);
+            break;
     }
 
     return new_emote_container;
 }
 
 export async function fetAllEmotes(): Promise<any> {
-    let emote_containers: Array<EmoteContainer> = [];
+    let emote_containers: Array<EMOTE_CONTAINER> = [];
 
     for (const emote_source in EMOTE_URLS) {
         console.log('------');
@@ -133,9 +155,8 @@ export async function fetAllEmotes(): Promise<any> {
 
 
 /*
-
-let fetch_ffz = async() => {
-    return await fetch(`https://api.frankerfacez.com/v1/room/id/${process.env.TWITCH_BROADCASTER_ID}`, {
+let fetch_7tv_global = async() => {
+    return await fetch('https://api.7tv.app/v2/emotes/global', {
         method: 'GET',
         headers: {
             'Content-Type': 'application/json; charset=utf-8',
@@ -144,16 +165,13 @@ let fetch_ffz = async() => {
     });
 }
 
-fetch_ffz().then(res => res.json()).then(data => {
-    let room_set = data['room']['set'];
-    let emotes = data['sets'][room_set]['emoticons'];
-    let x = new FFZ_CONTAINER(`https://api.frankerfacez.com/v1/room/id/${process.env.TWITCH_BROADCASTER_ID}`);
-    x.saveAsRecord(emotes);
-    console.log(x);
-
-    for(const y in x.emote_record) {
-        console.log(`https://cdn.frankerfacez.com/emote/${x.emote_record[y]}/4`);
+fetch_7tv_global().then(res => res.json()).then(data => {
+    let new_container = new SEVENTV_GLOBAL_CONTAINER('https://api.7tv.app/v2/emotes/global');
+    new_container.saveAsRecord(data);
+    for(const emote in new_container.emote_record) {
+        console.log(`${emote} - ${new_container.emote_record[emote]}`);
     }
+
 });
 
 */

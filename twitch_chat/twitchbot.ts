@@ -39,7 +39,7 @@ server.on("connection", async (ws) => {
 client.on("connected", async () => {
     console.log("connected to twitch chat!");
 
-    let emote_containers: Array<Emotes.EmoteContainer> = await Emotes.fetAllEmotes();
+    let emote_containers: Array<Emotes.EMOTE_CONTAINER> = await Emotes.fetAllEmotes();
     for(const emote_container of emote_containers) {
         emote_record[emote_container.constructor.name] = emote_container.emote_record;
         //emote_record = {...emote_record, ...emote_container.emote_record};
@@ -57,7 +57,7 @@ client.on('message', async (channel, tags, message, self) => {
         client.say(channel, `@${tags.username}, hello!`);
     }
     else {
-        // TODO: implement frankerz and 7tv
+        // TODO: implement 7tv (global + user)
 
         let twitch_emotes = tags["emotes"];
         let first_emote = getFirstEmote(message, twitch_emotes);
@@ -75,12 +75,20 @@ client.on('message', async (channel, tags, message, self) => {
             case 'TWITCH':
                 emote_url = `https://static-cdn.jtvnw.net/emoticons/v2/${first_emote[1]}/default/light/3.0`;
                 break;
+            case '7TV':
+                emote_url = `https://cdn.7tv.app/emote/${emote_record['SEVENTV_GLOBAL_CONTAINER'][first_emote[1]]}/4x`;
+                break;
         }
 
         console.log(first_emote[1]);
         console.log(emote_url);
 
-        emote_wall.send(emote_url);
+        try {
+            emote_wall.send(emote_url);
+        }
+        catch (e) {
+            console.log(e);
+        }
     }
 });
 
@@ -98,7 +106,7 @@ function getFirstEmote(message: string, twitch_emotes: Record<string, Array<stri
         position: 500,
         name: ''
 
-    }
+    };
     let bttv_emote_codes = Object.keys({...emote_record['BTTV_GLOBAL_CONTAINER'], ...emote_record['BTTV_USER_CONTAINER']});
     bttv_emote.name = message_split.filter(x => bttv_emote_codes.includes(x))[0];
     bttv_emote.position = message.indexOf(bttv_emote.name);
@@ -111,12 +119,24 @@ function getFirstEmote(message: string, twitch_emotes: Record<string, Array<stri
         position: 500,
         name: ''
 
-    }
+    };
     let ffz_emote_codes = Object.keys(emote_record['FFZ_CONTAINER']);
     ffz_emote.name = message_split.filter(x => ffz_emote_codes.includes(x))[0];
     ffz_emote.position = message.indexOf(ffz_emote.name);
     if(ffz_emote.position < 0)
         ffz_emote.position = 500;
+
+    // get first 7tv emote
+    let seventv_emote: emote_info = {
+        source: '7TV',
+        position: 500,
+        name: ''
+    };
+    let seventv_emote_codes = Object.keys(emote_record['SEVENTV_GLOBAL_CONTAINER']);
+    seventv_emote.name = message_split.filter(x => seventv_emote_codes.includes(x))[0];
+    seventv_emote.position = message.indexOf(seventv_emote.name);
+    if(seventv_emote.position < 0)
+        seventv_emote.position = 500;
 
     // get first twitch emote
     let twitch_emote: emote_info = {
@@ -137,7 +157,7 @@ function getFirstEmote(message: string, twitch_emotes: Record<string, Array<stri
         position: 500,
         name: ''
     };
-    for(const current_emote_info of [bttv_emote, ffz_emote, twitch_emote]) {
+    for(const current_emote_info of [bttv_emote, ffz_emote, seventv_emote, twitch_emote]) {
         if(current_emote_info.position < first_emote.position) {
             first_emote = current_emote_info
         }

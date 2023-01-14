@@ -60,7 +60,7 @@ var __spreadArray = (this && this.__spreadArray) || function (to, from, pack) {
     return to.concat(ar || Array.prototype.slice.call(from));
 };
 exports.__esModule = true;
-exports.fetAllEmotes = exports.EmoteContainer = void 0;
+exports.fetAllEmotes = exports.EMOTE_CONTAINER = void 0;
 require("dotenv").config();
 ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 // VARIABLES
@@ -73,7 +73,8 @@ require("dotenv").config();
 var EMOTE_URLS = {
     'BTTV_GLOBAL': 'https://api.betterttv.net/3/cached/emotes/global',
     'BTTV_USER': "https://api.betterttv.net/3/cached/users/twitch/".concat(process.env.TWITCH_BROADCASTER_ID),
-    'FFZ': "https://api.frankerfacez.com/v1/room/id/".concat(process.env.TWITCH_BROADCASTER_ID)
+    'FFZ': "https://api.frankerfacez.com/v1/room/id/".concat(process.env.TWITCH_BROADCASTER_ID),
+    '7TV_GLOBAL': 'https://api.7tv.app/v2/emotes/global'
 };
 function fetchEmoteUrl(url) {
     return __awaiter(this, void 0, void 0, function () {
@@ -102,13 +103,13 @@ function downloadEmoteCodes(url) {
         });
     });
 }
-var EmoteContainer = /** @class */ (function () {
-    function EmoteContainer(emote_url) {
+var EMOTE_CONTAINER = /** @class */ (function () {
+    function EMOTE_CONTAINER(emote_url) {
         this.emote_url = emote_url;
     }
-    return EmoteContainer;
+    return EMOTE_CONTAINER;
 }());
-exports.EmoteContainer = EmoteContainer;
+exports.EMOTE_CONTAINER = EMOTE_CONTAINER;
 var BTTV_GLOBAL_CONTAINER = /** @class */ (function (_super) {
     __extends(BTTV_GLOBAL_CONTAINER, _super);
     function BTTV_GLOBAL_CONTAINER(emote_url) {
@@ -124,7 +125,7 @@ var BTTV_GLOBAL_CONTAINER = /** @class */ (function (_super) {
         return record;
     };
     return BTTV_GLOBAL_CONTAINER;
-}(EmoteContainer));
+}(EMOTE_CONTAINER));
 var BTTV_USER_CONTAINER = /** @class */ (function (_super) {
     __extends(BTTV_USER_CONTAINER, _super);
     function BTTV_USER_CONTAINER(emote_url) {
@@ -140,7 +141,7 @@ var BTTV_USER_CONTAINER = /** @class */ (function (_super) {
         return record;
     };
     return BTTV_USER_CONTAINER;
-}(EmoteContainer));
+}(EMOTE_CONTAINER));
 var FFZ_CONTAINER = /** @class */ (function (_super) {
     __extends(FFZ_CONTAINER, _super);
     function FFZ_CONTAINER(emote_url) {
@@ -158,7 +159,23 @@ var FFZ_CONTAINER = /** @class */ (function (_super) {
         return record;
     };
     return FFZ_CONTAINER;
-}(EmoteContainer));
+}(EMOTE_CONTAINER));
+var SEVENTV_GLOBAL_CONTAINER = /** @class */ (function (_super) {
+    __extends(SEVENTV_GLOBAL_CONTAINER, _super);
+    function SEVENTV_GLOBAL_CONTAINER(emote_url) {
+        return _super.call(this, emote_url) || this;
+    }
+    SEVENTV_GLOBAL_CONTAINER.prototype.saveAsRecord = function (data) {
+        var record = {};
+        for (var _i = 0, data_2 = data; _i < data_2.length; _i++) {
+            var emote = data_2[_i];
+            record[emote['name']] = emote['id'];
+        }
+        this.emote_record = record;
+        return record;
+    };
+    return SEVENTV_GLOBAL_CONTAINER;
+}(EMOTE_CONTAINER));
 function createEmoteContainer(emote_source, emote_url) {
     var new_emote_container;
     switch (emote_source) {
@@ -170,6 +187,9 @@ function createEmoteContainer(emote_source, emote_url) {
             break;
         case 'FFZ':
             new_emote_container = new FFZ_CONTAINER(emote_url);
+            break;
+        case '7TV_GLOBAL':
+            new_emote_container = new SEVENTV_GLOBAL_CONTAINER(emote_url);
             break;
     }
     return new_emote_container;
@@ -216,9 +236,8 @@ exports.fetAllEmotes = fetAllEmotes;
 // bttv emote url: https://cdn.betterttv.net/emote/{id}/3x
 // oiduh bttv user id: 598f2a195aba4636b7359f44
 /*
-
-let fetch_ffz = async() => {
-    return await fetch(`https://api.frankerfacez.com/v1/room/id/${process.env.TWITCH_BROADCASTER_ID}`, {
+let fetch_7tv_global = async() => {
+    return await fetch('https://api.7tv.app/v2/emotes/global', {
         method: 'GET',
         headers: {
             'Content-Type': 'application/json; charset=utf-8',
@@ -227,16 +246,13 @@ let fetch_ffz = async() => {
     });
 }
 
-fetch_ffz().then(res => res.json()).then(data => {
-    let room_set = data['room']['set'];
-    let emotes = data['sets'][room_set]['emoticons'];
-    let x = new FFZ_CONTAINER(`https://api.frankerfacez.com/v1/room/id/${process.env.TWITCH_BROADCASTER_ID}`);
-    x.saveAsRecord(emotes);
-    console.log(x);
-
-    for(const y in x.emote_record) {
-        console.log(`https://cdn.frankerfacez.com/emote/${x.emote_record[y]}/4`);
+fetch_7tv_global().then(res => res.json()).then(data => {
+    let new_container = new SEVENTV_GLOBAL_CONTAINER('https://api.7tv.app/v2/emotes/global');
+    new_container.saveAsRecord(data);
+    for(const emote in new_container.emote_record) {
+        console.log(`${emote} - ${new_container.emote_record[emote]}`);
     }
+
 });
 
-*/
+*/ 
