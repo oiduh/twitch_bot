@@ -40,17 +40,14 @@ class Emote {
 
         // change image size on load -> easier to adjust wide emotes
         img.onload = () => {
-            let aspect_ratio = Math.floor(img.width / img.height);
+            let aspect_ratio = img.width / img.height;
             img.height = this.height;
-            img.width = this.height * aspect_ratio;
+            img.width = Math.floor(this.height * aspect_ratio);
             this.setRandomPosition();
-            img.style.visibility = 'visible';
+            img.id = 'emote';
         }
 
         img.src = this.url;
-        // image hidden until loaded, resized and randomly positioned
-        img.style.visibility = 'hidden';
-
         this.image = img;
     }
 

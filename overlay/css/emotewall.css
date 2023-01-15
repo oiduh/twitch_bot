@@ -12,11 +12,14 @@ html, body {
 }
 
 @-webkit-keyframes fadeOut {
-    0%, 50% {opacity: 1;}
+    0%, 10% {opacity: 0;}
+    10%, 50% {opacity: 1;}
     100% {opacity: 0;}
 }
 
+
 @keyframes fadeOut {
-    0%, 50% {opacity: 1;}
+    0%, 10% {opacity: 0;}
+    10%, 50% {opacity: 1;}
     100% {opacity: 0;}
 }

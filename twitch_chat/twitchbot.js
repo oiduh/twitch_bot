@@ -131,7 +131,7 @@ client.on('message', function (channel, tags, message, self) { return __awaiter(
                     emote_url = "https://static-cdn.jtvnw.net/emoticons/v2/".concat(first_emote[1], "/default/light/3.0");
                     break;
                 case '7TV':
-                    emote_url = "https://cdn.7tv.app/emote/".concat(emote_record['SEVENTV_GLOBAL_CONTAINER'][first_emote[1]], "/4x.gif");
+                    emote_url = "https://cdn.7tv.app/emote/".concat(emote_record['SEVENTV_GLOBAL_CONTAINER'][first_emote[1]], "/4x");
                     break;
             }
             console.log(first_emote[1]);

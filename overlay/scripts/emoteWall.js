@@ -28,15 +28,13 @@ var Emote = /** @class */ (function () {
         var img = document.createElement('img');
         // change image size on load -> easier to adjust wide emotes
         img.onload = function () {
-            var aspect_ratio = Math.floor(img.width / img.height);
+            var aspect_ratio = img.width / img.height;
             img.height = _this.height;
-            img.width = _this.height * aspect_ratio;
+            img.width = Math.floor(_this.height * aspect_ratio);
             _this.setRandomPosition();
-            img.style.visibility = 'visible';
+            img.id = 'emote';
         };
         img.src = this.url;
-        // image hidden until loaded, resized and randomly positioned
-        img.style.visibility = 'hidden';
         this.image = img;
     };
     Emote.prototype.setRandomPosition = function () {
