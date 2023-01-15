@@ -107,7 +107,7 @@ client.on("connected", function () { return __awaiter(void 0, void 0, void 0, fu
 }); });
 client.connect();
 client.on('message', function (channel, tags, message, self) { return __awaiter(void 0, void 0, void 0, function () {
-    var twitch_emotes, first_emote, emote_url, combine_bttv;
+    var twitch_emotes, first_emote, emote_url, combine_bttv, combine_7tv;
     return __generator(this, function (_a) {
         if (self)
             return [2 /*return*/];
@@ -131,7 +131,8 @@ client.on('message', function (channel, tags, message, self) { return __awaiter(
                     emote_url = "https://static-cdn.jtvnw.net/emoticons/v2/".concat(first_emote[1], "/default/light/3.0");
                     break;
                 case '7TV':
-                    emote_url = "https://cdn.7tv.app/emote/".concat(emote_record['SEVENTV_GLOBAL_CONTAINER'][first_emote[1]], "/4x");
+                    combine_7tv = __assign(__assign({}, emote_record['SEVENTV_GLOBAL_CONTAINER']), emote_record['SEVENTV_USER_CONTAINER']);
+                    emote_url = "https://cdn.7tv.app/emote/".concat(combine_7tv[first_emote[1]], "/4x");
                     break;
             }
             console.log(first_emote[1]);
@@ -176,7 +177,7 @@ function getFirstEmote(message, twitch_emotes) {
         position: 500,
         name: ''
     };
-    var seventv_emote_codes = Object.keys(emote_record['SEVENTV_GLOBAL_CONTAINER']);
+    var seventv_emote_codes = Object.keys(__assign(__assign({}, emote_record['SEVENTV_GLOBAL_CONTAINER']), emote_record['SEVENTV_USER_CONTAINER']));
     seventv_emote.name = message_split.filter(function (x) { return seventv_emote_codes.includes(x); })[0];
     seventv_emote.position = message.indexOf(seventv_emote.name);
     if (seventv_emote.position < 0)

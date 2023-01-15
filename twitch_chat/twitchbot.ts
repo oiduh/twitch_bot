@@ -76,7 +76,8 @@ client.on('message', async (channel, tags, message, self) => {
                 emote_url = `https://static-cdn.jtvnw.net/emoticons/v2/${first_emote[1]}/default/light/3.0`;
                 break;
             case '7TV':
-                emote_url = `https://cdn.7tv.app/emote/${emote_record['SEVENTV_GLOBAL_CONTAINER'][first_emote[1]]}/4x`;
+                let combine_7tv = {...emote_record['SEVENTV_GLOBAL_CONTAINER'], ...emote_record['SEVENTV_USER_CONTAINER']}
+                emote_url = `https://cdn.7tv.app/emote/${combine_7tv[first_emote[1]]}/4x`;
                 break;
         }
 
@@ -132,7 +133,7 @@ function getFirstEmote(message: string, twitch_emotes: Record<string, Array<stri
         position: 500,
         name: ''
     };
-    let seventv_emote_codes = Object.keys(emote_record['SEVENTV_GLOBAL_CONTAINER']);
+    let seventv_emote_codes = Object.keys({...emote_record['SEVENTV_GLOBAL_CONTAINER'], ...emote_record['SEVENTV_USER_CONTAINER']});
     seventv_emote.name = message_split.filter(x => seventv_emote_codes.includes(x))[0];
     seventv_emote.position = message.indexOf(seventv_emote.name);
     if(seventv_emote.position < 0)
@@ -143,7 +144,7 @@ function getFirstEmote(message: string, twitch_emotes: Record<string, Array<stri
         source: 'TWITCH',
         position: 500,
         name: ''
-    }
+    };
     for(const emote in twitch_emotes) {
         let pos = twitch_emotes[emote][0].split('-')[0] as unknown as number;
         if(pos < twitch_emote.position) {
