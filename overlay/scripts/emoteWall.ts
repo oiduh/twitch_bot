@@ -37,6 +37,7 @@ class Emote {
 
     createHTMLImage(): void {
         let img = document.createElement('img');
+        img.style.visibility = 'hidden';
 
         // change image size on load -> easier to adjust wide emotes
         img.onload = () => {
@@ -44,6 +45,7 @@ class Emote {
             img.height = this.height;
             img.width = Math.floor(this.height * aspect_ratio);
             this.setRandomPosition();
+            img.style.visibility = 'visible';
             img.id = 'emote';
         }
 

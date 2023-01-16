@@ -60,15 +60,12 @@ var __spreadArray = (this && this.__spreadArray) || function (to, from, pack) {
     return to.concat(ar || Array.prototype.slice.call(from));
 };
 exports.__esModule = true;
-exports.fetAllEmotes = exports.EMOTE_CONTAINER = void 0;
+exports.fetchAllEmotes = exports.EMOTES = void 0;
 require("dotenv").config();
 ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+//
 // VARIABLES
 //
-// 1) source of emotes as type -> bttv, frankerz, 7tv, ...
-// 2) record of source with its url to fetch from
-//
-// TODO: add more sources
 ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 var EMOTE_URLS = {
     'BTTV_GLOBAL': 'https://api.betterttv.net/3/cached/emotes/global',
@@ -77,25 +74,18 @@ var EMOTE_URLS = {
     '7TV_GLOBAL': 'https://api.7tv.app/v2/emotes/global',
     '7TV_USER': "https://api.7tv.app/v2/users/".concat(process.env.TWITCH_BROADCASTER_ID, "/emotes")
 };
-function fetchEmoteUrl(url) {
-    return __awaiter(this, void 0, void 0, function () {
-        return __generator(this, function (_a) {
-            return [2 /*return*/, fetch(url, {
-                    method: 'GET',
-                    headers: {
-                        'Content-Type': 'application/json; charset=utf-8',
-                        'User-agent': 'vscode-client'
-                    }
-                })];
-        });
-    });
-}
-function downloadEmoteCodes(url) {
+function fetchEmoteCodes(url) {
     return __awaiter(this, void 0, void 0, function () {
         var response;
         return __generator(this, function (_a) {
             switch (_a.label) {
-                case 0: return [4 /*yield*/, fetchEmoteUrl(url)];
+                case 0: return [4 /*yield*/, fetch(url, {
+                        method: 'GET',
+                        headers: {
+                            'Content-Type': 'application/json; charset=utf-8',
+                            'User-agent': 'vscode-client'
+                        }
+                    })];
                 case 1:
                     response = _a.sent();
                     return [4 /*yield*/, response.json()];
@@ -104,19 +94,19 @@ function downloadEmoteCodes(url) {
         });
     });
 }
-var EMOTE_CONTAINER = /** @class */ (function () {
-    function EMOTE_CONTAINER(emote_url) {
+var EMOTES = /** @class */ (function () {
+    function EMOTES(emote_url) {
         this.emote_url = emote_url;
     }
-    return EMOTE_CONTAINER;
+    return EMOTES;
 }());
-exports.EMOTE_CONTAINER = EMOTE_CONTAINER;
-var BTTV_GLOBAL_CONTAINER = /** @class */ (function (_super) {
-    __extends(BTTV_GLOBAL_CONTAINER, _super);
-    function BTTV_GLOBAL_CONTAINER(emote_url) {
-        return _super.call(this, emote_url) || this;
+exports.EMOTES = EMOTES;
+var BTTV_GLOBAL = /** @class */ (function (_super) {
+    __extends(BTTV_GLOBAL, _super);
+    function BTTV_GLOBAL() {
+        return _super !== null && _super.apply(this, arguments) || this;
     }
-    BTTV_GLOBAL_CONTAINER.prototype.saveAsRecord = function (data) {
+    BTTV_GLOBAL.prototype.saveAsRecord = function (data) {
         var record = {};
         for (var _i = 0, data_1 = data; _i < data_1.length; _i++) {
             var entry = data_1[_i];
@@ -125,14 +115,14 @@ var BTTV_GLOBAL_CONTAINER = /** @class */ (function (_super) {
         this.emote_record = record;
         return record;
     };
-    return BTTV_GLOBAL_CONTAINER;
-}(EMOTE_CONTAINER));
-var BTTV_USER_CONTAINER = /** @class */ (function (_super) {
-    __extends(BTTV_USER_CONTAINER, _super);
-    function BTTV_USER_CONTAINER(emote_url) {
-        return _super.call(this, emote_url) || this;
+    return BTTV_GLOBAL;
+}(EMOTES));
+var BTTV_USER = /** @class */ (function (_super) {
+    __extends(BTTV_USER, _super);
+    function BTTV_USER() {
+        return _super !== null && _super.apply(this, arguments) || this;
     }
-    BTTV_USER_CONTAINER.prototype.saveAsRecord = function (data) {
+    BTTV_USER.prototype.saveAsRecord = function (data) {
         var record = {};
         for (var _i = 0, _a = __spreadArray(__spreadArray([], data['channelEmotes'], true), data['sharedEmotes'], true); _i < _a.length; _i++) {
             var entry = _a[_i];
@@ -141,14 +131,14 @@ var BTTV_USER_CONTAINER = /** @class */ (function (_super) {
         this.emote_record = record;
         return record;
     };
-    return BTTV_USER_CONTAINER;
-}(EMOTE_CONTAINER));
-var FFZ_CONTAINER = /** @class */ (function (_super) {
-    __extends(FFZ_CONTAINER, _super);
-    function FFZ_CONTAINER(emote_url) {
-        return _super.call(this, emote_url) || this;
+    return BTTV_USER;
+}(EMOTES));
+var FFZ = /** @class */ (function (_super) {
+    __extends(FFZ, _super);
+    function FFZ() {
+        return _super !== null && _super.apply(this, arguments) || this;
     }
-    FFZ_CONTAINER.prototype.saveAsRecord = function (data) {
+    FFZ.prototype.saveAsRecord = function (data) {
         var record = {};
         var room_set = data['room']['set'];
         var emotes = data['sets'][room_set]['emoticons'];
@@ -159,14 +149,14 @@ var FFZ_CONTAINER = /** @class */ (function (_super) {
         this.emote_record = record;
         return record;
     };
-    return FFZ_CONTAINER;
-}(EMOTE_CONTAINER));
-var SEVENTV_GLOBAL_CONTAINER = /** @class */ (function (_super) {
-    __extends(SEVENTV_GLOBAL_CONTAINER, _super);
-    function SEVENTV_GLOBAL_CONTAINER(emote_url) {
-        return _super.call(this, emote_url) || this;
+    return FFZ;
+}(EMOTES));
+var SEVENTV_GLOBAL = /** @class */ (function (_super) {
+    __extends(SEVENTV_GLOBAL, _super);
+    function SEVENTV_GLOBAL() {
+        return _super !== null && _super.apply(this, arguments) || this;
     }
-    SEVENTV_GLOBAL_CONTAINER.prototype.saveAsRecord = function (data) {
+    SEVENTV_GLOBAL.prototype.saveAsRecord = function (data) {
         var record = {};
         for (var _i = 0, data_2 = data; _i < data_2.length; _i++) {
             var emote = data_2[_i];
@@ -175,14 +165,14 @@ var SEVENTV_GLOBAL_CONTAINER = /** @class */ (function (_super) {
         this.emote_record = record;
         return record;
     };
-    return SEVENTV_GLOBAL_CONTAINER;
-}(EMOTE_CONTAINER));
-var SEVENTV_USER_CONTAINER = /** @class */ (function (_super) {
-    __extends(SEVENTV_USER_CONTAINER, _super);
-    function SEVENTV_USER_CONTAINER(emote_url) {
-        return _super.call(this, emote_url) || this;
+    return SEVENTV_GLOBAL;
+}(EMOTES));
+var SEVENTV_USER = /** @class */ (function (_super) {
+    __extends(SEVENTV_USER, _super);
+    function SEVENTV_USER() {
+        return _super !== null && _super.apply(this, arguments) || this;
     }
-    SEVENTV_USER_CONTAINER.prototype.saveAsRecord = function (data) {
+    SEVENTV_USER.prototype.saveAsRecord = function (data) {
         var record = {};
         for (var _i = 0, data_3 = data; _i < data_3.length; _i++) {
             var emote = data_3[_i];
@@ -191,30 +181,30 @@ var SEVENTV_USER_CONTAINER = /** @class */ (function (_super) {
         this.emote_record = record;
         return record;
     };
-    return SEVENTV_USER_CONTAINER;
-}(EMOTE_CONTAINER));
+    return SEVENTV_USER;
+}(EMOTES));
 function createEmoteContainer(emote_source, emote_url) {
     var new_emote_container;
     switch (emote_source) {
         case 'BTTV_GLOBAL':
-            new_emote_container = new BTTV_GLOBAL_CONTAINER(emote_url);
+            new_emote_container = new BTTV_GLOBAL(emote_url);
             break;
         case 'BTTV_USER':
-            new_emote_container = new BTTV_USER_CONTAINER(emote_url);
+            new_emote_container = new BTTV_USER(emote_url);
             break;
         case 'FFZ':
-            new_emote_container = new FFZ_CONTAINER(emote_url);
+            new_emote_container = new FFZ(emote_url);
             break;
         case '7TV_GLOBAL':
-            new_emote_container = new SEVENTV_GLOBAL_CONTAINER(emote_url);
+            new_emote_container = new SEVENTV_GLOBAL(emote_url);
             break;
         case '7TV_USER':
-            new_emote_container = new SEVENTV_USER_CONTAINER(emote_url);
+            new_emote_container = new SEVENTV_USER(emote_url);
             break;
     }
     return new_emote_container;
 }
-function fetAllEmotes() {
+function fetchAllEmotes() {
     return __awaiter(this, void 0, void 0, function () {
         var emote_containers, _a, _b, _c, _i, emote_source, new_emote_container, emotes_json;
         return __generator(this, function (_d) {
@@ -233,7 +223,7 @@ function fetAllEmotes() {
                     if (!(_c in _a)) return [3 /*break*/, 3];
                     emote_source = _c;
                     new_emote_container = createEmoteContainer(emote_source, EMOTE_URLS[emote_source]);
-                    return [4 /*yield*/, downloadEmoteCodes(new_emote_container.emote_url)];
+                    return [4 /*yield*/, fetchEmoteCodes(new_emote_container.emote_url)];
                 case 2:
                     emotes_json = _d.sent();
                     new_emote_container.saveAsRecord(emotes_json);
@@ -247,8 +237,4 @@ function fetAllEmotes() {
         });
     });
 }
-exports.fetAllEmotes = fetAllEmotes;
-//let u = 'https://api.betterttv.net/3/cached/emotes/global';
-//console.log(request_emotes(u));
-// bttv emote url: https://cdn.betterttv.net/emote/{id}/3x
-// oiduh bttv user id: 598f2a195aba4636b7359f44
+exports.fetchAllEmotes = fetchAllEmotes;
