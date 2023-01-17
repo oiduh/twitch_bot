@@ -91,17 +91,17 @@ client.on("connected", function () { return __awaiter(void 0, void 0, void 0, fu
 }); });
 client.connect();
 client.on('message', function (channel, tags, message, self) { return __awaiter(void 0, void 0, void 0, function () {
-    var twitch_emotes, _a, emote_source, emote_name, emote_url;
+    var command, twitch_emotes, _a, emote_source, emote_name, emote_url;
     return __generator(this, function (_b) {
         if (self)
             return [2 /*return*/];
-        if (message.toLowerCase() === '!hello') {
+        command = message.split(' ', 1)[0].toLowerCase();
+        if (command === '!hello') {
             client.say(channel, "@".concat(tags.username, ", hello!"));
         }
-        else {
+        else if (command === '!showemote') {
             twitch_emotes = tags["emotes"];
             _a = getFirstEmote(message, twitch_emotes), emote_source = _a[0], emote_name = _a[1];
-            console.log("first emote is \"".concat(emote_name, "\" from ").concat(emote_source));
             emote_url = '';
             switch (emote_source) {
                 case 'BTTV_GLOBAL':
@@ -118,9 +118,12 @@ client.on('message', function (channel, tags, message, self) { return __awaiter(
                 case 'TWITCH':
                     emote_url = "https://static-cdn.jtvnw.net/emoticons/v2/".concat(emote_name, "/default/light/3.0");
                     break;
+                default:
+                    return [2 /*return*/];
             }
-            console.log(emote_name);
+            console.log("first emote is \"".concat(emote_name, "\" from ").concat(emote_source));
             console.log(emote_url);
+            // fails if emotewall is not connected
             try {
                 emote_wall.send(emote_url);
             }
@@ -133,32 +136,7 @@ client.on('message', function (channel, tags, message, self) { return __awaiter(
 }); });
 function getFirstEmote(message, twitch_emotes) {
     var message_split = message.split(' ');
-    /*
-    // get first bttv emote
-    let bttv_emote: emote_info = { source: 'BTTV', position: 500, name: '' };
-    let bttv_emote_codes = Object.keys({...emote_record['BTTV_GLOBAL'], ...emote_record['BTTV_USER']});
-    bttv_emote.name = message_split.filter(x => bttv_emote_codes.includes(x))[0];
-    bttv_emote.position = message.indexOf(bttv_emote.name);
-    if(bttv_emote.position < 0)
-        bttv_emote.position = 500;
-
-    // get first ffz emote
-    let ffz_emote: emote_info = { source: 'FFZ', position: 500, name: '' };
-    let ffz_emote_codes = Object.keys(emote_record['FFZ']);
-    ffz_emote.name = message_split.filter(x => ffz_emote_codes.includes(x))[0];
-    ffz_emote.position = message.indexOf(ffz_emote.name);
-    if(ffz_emote.position < 0)
-        ffz_emote.position = 500;
-
-    // get first 7tv emote
-    let seventv_emote: emote_info = { source: '7TV', position: 500, name: '' };
-    let seventv_emote_codes = Object.keys({...emote_record['SEVENTV_GLOBAL'], ...emote_record['SEVENTV_USER']});
-    seventv_emote.name = message_split.filter(x => seventv_emote_codes.includes(x))[0];
-    seventv_emote.position = message.indexOf(seventv_emote.name);
-    if(seventv_emote.position < 0)
-        seventv_emote.position = 500;
-
-    */
+    // determine information about first non twitch emote
     var non_twitch_emote = { source: '', position: 500, name: '' };
     var _loop_1 = function (emote_source) {
         var emote_codes = Object.keys(emote_record[emote_source].emote_record);
@@ -184,6 +162,8 @@ function getFirstEmote(message, twitch_emotes) {
             twitch_emote.position = pos;
         }
     }
+    if (non_twitch_emote.position === 500 && twitch_emote.position === 500)
+        return ['', ''];
     return non_twitch_emote.position < twitch_emote.position
         ? [non_twitch_emote.source, non_twitch_emote.name]
         : [twitch_emote.source, twitch_emote.name];

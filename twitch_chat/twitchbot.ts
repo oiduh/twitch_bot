@@ -47,10 +47,12 @@ client.connect();
 client.on('message', async (channel, tags, message, self) => {
     if (self) return;
 
-    if (message.toLowerCase() === '!hello') {
+    let command = message.split(' ', 1)[0].toLowerCase();
+
+    if (command === '!hello') {
         client.say(channel, `@${tags.username}, hello!`);
     }
-    else {
+    else if (command=== '!showemote') {
         // TODO: implement 7tv (global + user)
 
         let twitch_emotes = tags["emotes"];
@@ -72,6 +74,8 @@ client.on('message', async (channel, tags, message, self) => {
             case 'TWITCH':
                 emote_url = `https://static-cdn.jtvnw.net/emoticons/v2/${emote_name}/default/light/3.0`;
                 break;
+            default:
+                return;
         }
 
         console.log(`first emote is "${emote_name}" from ${emote_source}`);
@@ -118,6 +122,9 @@ function getFirstEmote(message: string, twitch_emotes: Record<string, Array<stri
             twitch_emote.position = pos;
         }
     }
+
+    if (non_twitch_emote.position === 500 && twitch_emote.position === 500)
+        return ['', '']
 
     return non_twitch_emote.position < twitch_emote.position
         ? [non_twitch_emote.source, non_twitch_emote.name]

@@ -62,11 +62,6 @@ var __spreadArray = (this && this.__spreadArray) || function (to, from, pack) {
 exports.__esModule = true;
 exports.fetchAllEmotes = exports.EMOTES = void 0;
 require("dotenv").config();
-///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-//
-// VARIABLES
-//
-///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 var EMOTE_URLS = {
     'BTTV_GLOBAL': 'https://api.betterttv.net/3/cached/emotes/global',
     'BTTV_USER': "https://api.betterttv.net/3/cached/users/twitch/".concat(process.env.TWITCH_BROADCASTER_ID),
