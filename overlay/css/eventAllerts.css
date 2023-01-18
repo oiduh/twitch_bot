@@ -1,0 +1,10 @@
+p {
+    font-size:30px;
+    color:#0000ff;
+    text-align: center;
+    font-family: "Comic Sans MS";
+}
+.user_name {
+    color: #ff0000;
+    text-outline: aqua 2px;
+}

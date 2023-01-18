@@ -1,7 +1,7 @@
 const ChatServer = require("ws").Server;
 const tmi = require("tmi.js");
 require("dotenv").config();
-import * as Emotes from "../test_scripts/bttv_fetch";
+import * as Emotes from "./utility/bttv_fetch";
 
 
 // TODO: add command -> mod, broadcaster only -> to change emote mode
