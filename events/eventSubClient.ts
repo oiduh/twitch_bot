@@ -1,15 +1,16 @@
 const ws = require("ws");
 require("dotenv").config();
 
-const BROADCASTER_USER_ID = "112465769";
+let event_server = new ws.Server({port: 3001});
+
+let event_client;
+event_server.on("connection", async (ws) => {
+    console.log("new connection");
+    event_client = await ws;
+    event_client.on("message", (data) => console.log(data));
+});
 
 let events: Record<string, any>[] = [];
-
-function addEvents(data: Record<string, any>): void {
-    events.push(data);
-}
-
-
 const event_handler = new ws.WebSocket("wss://eventsub-beta.wss.twitch.tv/ws");
 
 event_handler.on('open', function open() {
@@ -36,7 +37,7 @@ event_handler.on('message', async function message(data) {
                 "type": "channel.follow",
                 "version": "1",
                 "condition": {
-                    "broadcaster_user_id": BROADCASTER_USER_ID
+                    "broadcaster_user_id": process.env.TWITCH_BROADCASTER_ID,
                 },
                 "transport": {
                     "method": "websocket",
@@ -73,7 +74,8 @@ event_handler.on('message', async function message(data) {
 
             if(subscription_type === "channel.follow") {
                 let new_follower_name = parsed_data["payload"]["event"]["user_name"];
-                console.log(`${new_follower_name} just subscribed -> do something silly!`)
+                console.log(`${new_follower_name} just followed -> do something silly!`);
+                event_client.send(JSON.stringify(['Follow', new_follower_name]));
             }
 
             // TODO: handle other notifications
@@ -81,6 +83,10 @@ event_handler.on('message', async function message(data) {
         }
     }
 });
+
+function addEvents(data: Record<string, any>): void {
+    events.push(data);
+}
 
 function messageVerrifed(data: Record<any, any>): boolean {
     return "metadata" in data && "message_type" in data["metadata"];

@@ -1,57 +1,56 @@
-window.onload = function () { return connect_to_server(); };
+window.onload = () => connect_to_server();
 function connect_to_server() {
-    var socket;
+    let socket;
     socket = new WebSocket('ws://localhost:3000');
-    socket.onmessage = function (event) {
+    socket.onmessage = (event) => {
         console.log('received message:');
         console.log(event.data);
         showEmoteCommand(event.data);
     };
-    socket.onopen = function (event) { return console.log('connected'); };
-    socket.onclose = function (event) { return console.log('closed'); };
-    socket.onerror = function (event) { return console.log('error'); };
+    socket.onopen = (event) => console.log('connected');
+    socket.onclose = (event) => console.log('closed');
+    socket.onerror = (event) => console.log('error');
 }
 function showEmoteCommand(url) {
     // TODO: currently static -> command to change size
     new Emote(url, 128)
         .show();
 }
-var Emote = /** @class */ (function () {
-    function Emote(url, height) {
+class Emote {
+    constructor(url, height) {
         this.url = url;
         this.height = height;
         this.createHTMLImage();
         return this;
     }
-    Emote.prototype.createHTMLImage = function () {
-        var _this = this;
-        var img = document.createElement('img');
+    createHTMLImage() {
+        let img = document.createElement('img');
         img.style.visibility = 'hidden';
         // change image size on load -> easier to adjust wide emotes
-        img.onload = function () {
-            var aspect_ratio = img.width / img.height;
-            img.height = _this.height;
-            img.width = Math.floor(_this.height * aspect_ratio);
-            _this.setRandomPosition();
+        img.onload = () => {
+            let aspect_ratio = img.width / img.height;
+            img.height = this.height;
+            img.width = Math.floor(this.height * aspect_ratio);
+            this.setRandomPosition();
             img.style.visibility = 'visible';
             img.id = 'emote';
         };
         img.src = this.url;
         this.image = img;
-    };
-    Emote.prototype.setRandomPosition = function () {
-        var x = Math.max(Math.floor(Math.random() * window.innerHeight) - this.image.height, 0), y = Math.max(Math.floor(Math.random() * window.innerWidth) - this.image.width, 0);
+    }
+    setRandomPosition() {
+        const x = Math.max(Math.floor(Math.random() * window.innerHeight) - this.image.height, 0), y = Math.max(Math.floor(Math.random() * window.innerWidth) - this.image.width, 0);
         this.image.style.position = 'absolute';
-        this.image.style.top = "".concat(x, "px");
-        this.image.style.left = "".concat(y, "px");
+        this.image.style.top = `${x}px`;
+        this.image.style.left = `${y}px`;
         return this;
-    };
-    Emote.prototype.show = function () {
-        var img = this.image;
+    }
+    show() {
+        const img = this.image;
         document.getElementById('body').appendChild(img);
         setTimeout(function () {
             img.remove();
         }, 8000);
-    };
-    return Emote;
-}());
+    }
+}
+//# sourceMappingURL=emoteWall.js.map

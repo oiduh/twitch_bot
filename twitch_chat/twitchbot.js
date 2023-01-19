@@ -39,7 +39,7 @@ exports.__esModule = true;
 var ChatServer = require("ws").Server;
 var tmi = require("tmi.js");
 require("dotenv").config();
-var Emotes = require("../test_scripts/bttv_fetch");
+var Emotes = require("./utility/bttv_fetch");
 // TODO: add command -> mod, broadcaster only -> to change emote mode
 var server = new ChatServer({ port: 3000 });
 var client = new tmi.Client({

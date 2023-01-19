@@ -34,13 +34,25 @@ var __generator = (this && this.__generator) || function (thisArg, body) {
         if (op[0] & 5) throw op[1]; return { value: op[0] ? op[1] : void 0, done: true };
     }
 };
+var _this = this;
 var ws = require("ws");
 require("dotenv").config();
-var BROADCASTER_USER_ID = "112465769";
+var event_server = new ws.Server({ port: 3001 });
+var event_client;
+event_server.on("connection", function (ws) { return __awaiter(_this, void 0, void 0, function () {
+    return __generator(this, function (_a) {
+        switch (_a.label) {
+            case 0:
+                console.log("new connection");
+                return [4 /*yield*/, ws];
+            case 1:
+                event_client = _a.sent();
+                event_client.on("message", function (data) { return console.log(data); });
+                return [2 /*return*/];
+        }
+    });
+}); });
 var events = [];
-function addEvents(data) {
-    events.push(data);
-}
 var event_handler = new ws.WebSocket("wss://eventsub-beta.wss.twitch.tv/ws");
 event_handler.on('open', function open() {
     console.log("connection established");
@@ -65,7 +77,7 @@ event_handler.on('message', function message(data) {
                         "type": "channel.follow",
                         "version": "1",
                         "condition": {
-                            "broadcaster_user_id": BROADCASTER_USER_ID
+                            "broadcaster_user_id": process.env.TWITCH_BROADCASTER_ID
                         },
                         "transport": {
                             "method": "websocket",
@@ -101,7 +113,8 @@ event_handler.on('message', function message(data) {
                         console.log("The notification type is ".concat(subscription_type));
                         if (subscription_type === "channel.follow") {
                             new_follower_name = parsed_data["payload"]["event"]["user_name"];
-                            console.log("".concat(new_follower_name, " just subscribed -> do something silly!"));
+                            console.log("".concat(new_follower_name, " just followed -> do something silly!"));
+                            event_client.send(JSON.stringify(['Follow', new_follower_name]));
                         }
                         // TODO: handle other notifications
                     }
@@ -111,6 +124,9 @@ event_handler.on('message', function message(data) {
         });
     });
 });
+function addEvents(data) {
+    events.push(data);
+}
 function messageVerrifed(data) {
     return "metadata" in data && "message_type" in data["metadata"];
 }
