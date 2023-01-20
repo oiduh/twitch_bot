@@ -37,6 +37,8 @@ var __generator = (this && this.__generator) || function (thisArg, body) {
 var _this = this;
 var ws = require("ws");
 require("dotenv").config();
+// SERVER COMMUNICATING WITH OVERLAY
+//
 var event_server = new ws.Server({ port: 3001 });
 var event_client;
 event_server.on("connection", function (ws) { return __awaiter(_this, void 0, void 0, function () {
@@ -52,80 +54,107 @@ event_server.on("connection", function (ws) { return __awaiter(_this, void 0, vo
         }
     });
 }); });
-var events = [];
+// LIST OF EVENTS TO SUBSCRIBE TO
+//
+var events = [
+    'channel.follow', 'channel.update'
+];
+// CLIENT LISTENING TO EVENTS
+//
 var event_handler = new ws.WebSocket("wss://eventsub-beta.wss.twitch.tv/ws");
-event_handler.on('open', function open() {
-    console.log("connection established");
-});
 event_handler.on('message', function message(data) {
     return __awaiter(this, void 0, void 0, function () {
-        var parsed_data, metadata, message_type, session_id, channel_follows, subscription_type, new_follower_name;
-        return __generator(this, function (_a) {
-            switch (_a.label) {
+        var parsed_data, metadata, message_type, _a, session_id, _i, events_1, event_type, event_sub_message, subscription_type, new_follower_name;
+        return __generator(this, function (_b) {
+            switch (_b.label) {
                 case 0:
                     parsed_data = JSON.parse(data);
                     console.log("---------START------------");
                     console.log(parsed_data);
                     console.log("----------END-------------");
-                    if (!messageVerrifed(parsed_data)) return [3 /*break*/, 4];
+                    if (!messageVerrifed(parsed_data)) return [3 /*break*/, 9];
                     metadata = parsed_data["metadata"];
                     message_type = metadata["message_type"];
                     console.log("A message with type \"".concat(message_type, "\" was received!"));
-                    if (!(message_type === "session_welcome")) return [3 /*break*/, 3];
+                    _a = message_type;
+                    switch (_a) {
+                        case 'session_welcome': return [3 /*break*/, 1];
+                        case 'notification': return [3 /*break*/, 7];
+                    }
+                    return [3 /*break*/, 8];
+                case 1:
                     session_id = parsed_data["payload"]["session"]["id"];
-                    channel_follows = {
-                        "type": "channel.follow",
-                        "version": "1",
-                        "condition": {
-                            "broadcaster_user_id": process.env.TWITCH_BROADCASTER_ID
-                        },
-                        "transport": {
-                            "method": "websocket",
-                            "session_id": "".concat(session_id)
-                        }
-                    };
-                    addEvents(channel_follows);
-                    /*let res = */ return [4 /*yield*/, fetch("https://api.twitch.tv/helix/eventsub/subscriptions", {
+                    _i = 0, events_1 = events;
+                    _b.label = 2;
+                case 2:
+                    if (!(_i < events_1.length)) return [3 /*break*/, 5];
+                    event_type = events_1[_i];
+                    event_sub_message = createEventSubscription(event_type, session_id);
+                    return [4 /*yield*/, fetch("https://api.twitch.tv/helix/eventsub/subscriptions", {
                             method: "POST",
                             headers: getAuthHeaders(),
-                            body: JSON.stringify(events[0])
-                        })
-                            .then(function (response) { return response.json(); })
-                            .then(function (data) { return console.log(data); })
-                        // CHECK ALL EVENTS THE BOT IS SUBSCRIBED TO
-                    ];
-                case 1:
-                    /*let res = */ _a.sent();
-                    // CHECK ALL EVENTS THE BOT IS SUBSCRIBED TO
-                    return [4 /*yield*/, fetch("https://api.twitch.tv/helix/eventsub/subscriptions", {
-                            method: "GET",
-                            headers: getAuthHeaders(false)
+                            body: JSON.stringify(event_sub_message)
                         })
                             .then(function (response) { return response.json(); })
                             .then(function (data) { return console.log(data); })];
-                case 2:
-                    // CHECK ALL EVENTS THE BOT IS SUBSCRIBED TO
-                    _a.sent();
-                    return [3 /*break*/, 4];
                 case 3:
-                    if (parsed_data["metadata"]["message_type"] === "notification") {
+                    _b.sent();
+                    _b.label = 4;
+                case 4:
+                    _i++;
+                    return [3 /*break*/, 2];
+                case 5: 
+                // CHECK ALL EVENTS THE BOT IS SUBSCRIBED TO
+                return [4 /*yield*/, fetch("https://api.twitch.tv/helix/eventsub/subscriptions", {
+                        method: "GET",
+                        headers: getAuthHeaders(false)
+                    })
+                        .then(function (response) { return response.json(); })
+                        .then(function (data) { return console.log(data); })];
+                case 6:
+                    // CHECK ALL EVENTS THE BOT IS SUBSCRIBED TO
+                    _b.sent();
+                    return [3 /*break*/, 9];
+                case 7:
+                    {
                         subscription_type = metadata["subscription_type"];
                         console.log("The notification type is ".concat(subscription_type));
                         if (subscription_type === "channel.follow") {
                             new_follower_name = parsed_data["payload"]["event"]["user_name"];
                             console.log("".concat(new_follower_name, " just followed -> do something silly!"));
-                            event_client.send(JSON.stringify(['Follow', new_follower_name]));
+                            try {
+                                event_client.send(JSON.stringify(['Follow', new_follower_name]));
+                            }
+                            catch (e) {
+                                console.log(e);
+                            }
                         }
-                        // TODO: handle other notifications
+                        return [3 /*break*/, 9];
                     }
-                    _a.label = 4;
-                case 4: return [2 /*return*/];
+                    _b.label = 8;
+                case 8:
+                    {
+                        console.log("unknown message type: ".concat(message_type));
+                        return [3 /*break*/, 9];
+                    }
+                    _b.label = 9;
+                case 9: return [2 /*return*/];
             }
         });
     });
 });
-function addEvents(data) {
-    events.push(data);
+function createEventSubscription(subscription_type, session_id) {
+    return {
+        "type": "".concat(subscription_type),
+        "version": "1",
+        "condition": {
+            "broadcaster_user_id": process.env.TWITCH_BROADCASTER_ID
+        },
+        "transport": {
+            "method": "websocket",
+            "session_id": "".concat(session_id)
+        }
+    };
 }
 function messageVerrifed(data) {
     return "metadata" in data && "message_type" in data["metadata"];
