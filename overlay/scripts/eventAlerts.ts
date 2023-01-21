@@ -1,5 +1,9 @@
 window.onload = () => connect_to_event_server();
 
+// TODO: make test server to send a bunch of events!
+
+let BUSY = false;
+
 function connect_to_event_server(): void {
     console.log('connected to server!');
 
@@ -8,10 +12,26 @@ function connect_to_event_server(): void {
 
     event_server.onmessage = (event) => {
         console.log('received message:')
-        console.log(event.data);
+        let received_event = JSON.parse(event.data);
+        console.log(received_event);
 
-        let p = createAlertMessage(JSON.parse(event.data));
-        document.body.appendChild(p);
+        switch (received_event['type']) {
+            case 'GET_STATUS':
+                event_server.send(BUSY ? 'BUSY' : 'READY');
+                break;
+            case 'FOLLOWER':
+                BUSY = !BUSY;
+                let alert = showMessage(received_event);
+                setTimeout(function() {
+                    alert.remove();
+                    BUSY = !BUSY;
+                }, 5000);
+                break;
+            default:
+                console.log(`unknown event: ${received_event['type']}`);
+                break;
+        }
+
     };
 
     event_server.onopen = (event) => console.log('connected');
@@ -21,7 +41,7 @@ function connect_to_event_server(): void {
 
 
 
-function createAlertMessage(event: [string, string]): HTMLParagraphElement {
+function createFollowMessage(user_name: string): HTMLParagraphElement {
     let paragraph = document.createElement('p');
     let image = document.createElement('img');
     // TODO: pool of random images
@@ -33,7 +53,7 @@ function createAlertMessage(event: [string, string]): HTMLParagraphElement {
     paragraph.appendChild(text_1);
     let user_name_span = document.createElement('span');
     user_name_span.className = 'user_name'
-    user_name_span.innerText = event[1];
+    user_name_span.innerText = user_name;
     paragraph.appendChild(user_name_span);
     let text_2 = document.createTextNode(' !');
     paragraph.appendChild(text_2);
@@ -46,4 +66,11 @@ function createAlertMessage(event: [string, string]): HTMLParagraphElement {
     }, 8000);
 
     return paragraph;
+}
+
+function showMessage(user_name: string): HTMLParagraphElement {
+    let p = createFollowMessage(user_name);
+    document.body.appendChild(p);
+
+    return p;
 }

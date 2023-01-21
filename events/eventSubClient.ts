@@ -1,5 +1,18 @@
 const ws = require("ws");
 require("dotenv").config();
+import {Queue} from "../utility/queue";
+
+
+// EVENT TYPE
+//
+type Event = {
+    type: string,
+    content: string,
+}
+
+// EVENT QUEUE
+//
+let event_queue = new Queue<Event>();
 
 
 // SERVER COMMUNICATING WITH OVERLAY
@@ -9,7 +22,23 @@ let event_client;
 event_server.on("connection", async (ws) => {
     console.log("new connection");
     event_client = await ws;
-    event_client.on("message", (data) => console.log(data));
+    event_client.on("message", (message) => {
+        switch (message) {
+            case 'BUSY':
+                console.log('client is busy, wait for READY message');
+                break;
+            case 'READY':
+                console.log('client is ready, processing next event, if available');
+                if (event_queue.size() > 0) {
+                    let next_event = event_queue.dequeue();
+                    event_client.send(JSON.stringify(next_event));
+                }
+                break;
+            default:
+                console.log(`unknown message: ${message}`);
+                break;
+        }
+    });
 });
 
 // LIST OF EVENTS TO SUBSCRIBE TO
@@ -69,7 +98,17 @@ event_handler.on('message', async function message(data) {
                     let new_follower_name = parsed_data["payload"]["event"]["user_name"];
                     console.log(`${new_follower_name} just followed -> do something silly!`);
                     try {
-                        event_client.send(JSON.stringify(['Follow', new_follower_name]));
+                        //event_client.send(JSON.stringify(['Follow', new_follower_name]));
+                        let new_event: Event = {
+                            type: 'Follow',
+                            content: new_follower_name
+                        }
+                        event_queue.enqueue(new_event);
+                        let status_request: Event = {
+                            type: 'GET_STATUS',
+                            content: ''
+                        }
+                        event_client.send(JSON.stringify(status_request));
                     }
                     catch (e) {
                         console.log(e);
