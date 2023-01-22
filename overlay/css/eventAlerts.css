@@ -3,8 +3,16 @@ p {
     color:#0000ff;
     text-align: center;
     font-family: "Comic Sans MS";
+    user-select: none;
+    animation-delay: 1s;
+    -webkit-animation: fadeOut 9s linear forwards;
 }
 .user_name {
     color: #ff0000;
     text-outline: aqua 2px;
+}
+
+@-webkit-keyframes fadeOut {
+    0%, 80% {opacity: 1;}
+    80%, 100% {opacity: 0;}
 }

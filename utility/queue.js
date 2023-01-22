@@ -28,10 +28,3 @@ var Queue = /** @class */ (function () {
     return Queue;
 }());
 exports.Queue = Queue;
-var g = new Queue();
-g.enqueue('a');
-g.enqueue('c');
-g.enqueue('v');
-console.log(g.dequeue());
-console.log(g.dequeue());
-console.log(g.dequeue());

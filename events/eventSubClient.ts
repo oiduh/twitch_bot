@@ -22,7 +22,8 @@ let event_client;
 event_server.on("connection", async (ws) => {
     console.log("new connection");
     event_client = await ws;
-    event_client.on("message", (message) => {
+    event_client.on("message", (response) => {
+        let message = JSON.parse(response)['content'];
         switch (message) {
             case 'BUSY':
                 console.log('client is busy, wait for READY message');
@@ -100,7 +101,7 @@ event_handler.on('message', async function message(data) {
                     try {
                         //event_client.send(JSON.stringify(['Follow', new_follower_name]));
                         let new_event: Event = {
-                            type: 'Follow',
+                            type: 'FOLLOWER',
                             content: new_follower_name
                         }
                         event_queue.enqueue(new_event);

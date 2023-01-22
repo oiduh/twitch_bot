@@ -17,15 +17,19 @@ function connect_to_event_server(): void {
 
         switch (received_event['type']) {
             case 'GET_STATUS':
-                event_server.send(BUSY ? 'BUSY' : 'READY');
+                console.log('GET_STATUS RECEIVED');
+                event_server.send(JSON.stringify({content: BUSY ? 'BUSY' : 'READY'}));
                 break;
             case 'FOLLOWER':
+                console.log('FOLLOWER RECEIVED');
+
                 BUSY = !BUSY;
-                let alert = showMessage(received_event);
+                let alert = showMessage(received_event['content']);
                 setTimeout(function() {
                     alert.remove();
                     BUSY = !BUSY;
-                }, 5000);
+                    event_server.send(JSON.stringify({content: 'READY'}));
+                }, 10000);
                 break;
             default:
                 console.log(`unknown event: ${received_event['type']}`);
@@ -60,11 +64,6 @@ function createFollowMessage(user_name: string): HTMLParagraphElement {
     paragraph.appendChild(document.createElement('br'));
     let text_3 = document.createTextNode('Thank you for following!');
     paragraph.appendChild(text_3);
-
-    setTimeout(function() {
-        paragraph.remove();
-    }, 8000);
-
     return paragraph;
 }
 
