@@ -1,24 +1,23 @@
+// @ts-ignore
+const PORT = 3000;
+const DEFAULT_EMOTE_HEIGHT = 128;
+
+
 window.onload = () => connect_to_server();
 
 function connect_to_server() {
     let socket;
-    socket = new WebSocket('ws://localhost:3000');
+    socket = new WebSocket(`ws://localhost:${PORT}`);
 
-    socket.onmessage = (event) => {
+    socket.onmessage = (image_source) => {
         console.log('received message:')
-        console.log(event.data);
-        showEmoteCommand(event.data);
+        console.log(image_source.data);
+        new Emote(image_source.data, DEFAULT_EMOTE_HEIGHT).show();
     };
 
     socket.onopen = (event) => console.log('connected');
     socket.onclose = (event) => console.log('closed');
     socket.onerror = (event) => console.log('error');
-}
-
-function showEmoteCommand(url): void {
-    // TODO: currently static -> command to change size
-    new Emote(url, 128)
-        .show();
 }
 
 class Emote {
@@ -29,17 +28,17 @@ class Emote {
     constructor(url: string, height: number) {
         this.url = url;
         this.height = height;
-
         this.createHTMLImage();
-
         return this;
     }
 
     createHTMLImage(): void {
         let img = document.createElement('img');
         img.style.visibility = 'hidden';
+        img.src = this.url;
+        this.image = img;
 
-        // change image size on load -> easier to adjust wide emotes
+        // change image size on load -> otherwise size and proportion unknown
         img.onload = () => {
             let aspect_ratio = img.width / img.height;
             img.height = this.height;
@@ -48,9 +47,6 @@ class Emote {
             img.style.visibility = 'visible';
             img.id = 'emote';
         }
-
-        img.src = this.url;
-        this.image = img;
     }
 
     setRandomPosition(): this {

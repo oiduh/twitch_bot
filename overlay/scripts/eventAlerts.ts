@@ -1,30 +1,34 @@
-window.onload = () => connect_to_event_server();
+// @ts-ignore
+const PORT = 3001;
+let BUSY = false;
+
+window.onload = () => {
+    connectToEventServer();
+}
 
 // TODO: make test server to send a bunch of events!
 
-let BUSY = false;
-
-function connect_to_event_server(): void {
+function connectToEventServer(): void {
     console.log('connected to server!');
 
-    let event_server;
-    event_server = new WebSocket('ws://localhost:3001');
+    let event_server = new WebSocket(`ws://localhost:${PORT}`);
 
     event_server.onmessage = (event) => {
         console.log('received message:')
-        let received_event = JSON.parse(event.data);
-        console.log(received_event);
+        let event_parsed = JSON.parse(event.data);
+        let event_type = event_parsed['type'];
+        console.log(event_parsed);
 
-        switch (received_event['type']) {
+        switch (event_type) {
             case 'GET_STATUS':
                 console.log('GET_STATUS RECEIVED');
                 event_server.send(JSON.stringify({content: BUSY ? 'BUSY' : 'READY'}));
                 break;
             case 'FOLLOWER':
                 console.log('FOLLOWER RECEIVED');
-
                 BUSY = !BUSY;
-                let alert = showMessage(received_event['content']);
+                console.log(event_parsed['image_path']);
+                let alert = showMessage(event_parsed['content'], event_parsed['image_path']);
                 setTimeout(function() {
                     alert.remove();
                     BUSY = !BUSY;
@@ -32,10 +36,9 @@ function connect_to_event_server(): void {
                 }, 10000);
                 break;
             default:
-                console.log(`unknown event: ${received_event['type']}`);
+                console.log(`unknown event: ${event_type}`);
                 break;
         }
-
     };
 
     event_server.onopen = (event) => console.log('connected');
@@ -43,32 +46,27 @@ function connect_to_event_server(): void {
     event_server.onerror = (event) => console.log('error');
 }
 
-
-
-function createFollowMessage(user_name: string): HTMLParagraphElement {
+function createFollowMessage(user_name: string, image_path: string): HTMLParagraphElement {
     let paragraph = document.createElement('p');
-    let image = document.createElement('img');
     // TODO: pool of random images
     // TODO: add sound effects
-    image.src = '../media/images/girls-kiss.gif';
+    let image = document.createElement('img');
+    image.src = image_path;
     paragraph.appendChild(image);
     paragraph.appendChild(document.createElement('br'));
-    let text_1 = document.createTextNode('Hello ');
-    paragraph.appendChild(text_1);
-    let user_name_span = document.createElement('span');
+    paragraph.appendChild(document.createTextNode('Hello '));
+    let user_name_span = document.createElement('span', );
     user_name_span.className = 'user_name'
     user_name_span.innerText = user_name;
     paragraph.appendChild(user_name_span);
-    let text_2 = document.createTextNode(' !');
-    paragraph.appendChild(text_2);
+    paragraph.appendChild(document.createTextNode(' !'));
     paragraph.appendChild(document.createElement('br'));
-    let text_3 = document.createTextNode('Thank you for following!');
-    paragraph.appendChild(text_3);
+    paragraph.appendChild(document.createTextNode('Thank you for following!'));
     return paragraph;
 }
 
-function showMessage(user_name: string): HTMLParagraphElement {
-    let p = createFollowMessage(user_name);
+function showMessage(user_name: string, image_path: string): HTMLParagraphElement {
+    let p = createFollowMessage(user_name, image_path);
     document.body.appendChild(p);
 
     return p;

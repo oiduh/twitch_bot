@@ -1,15 +1,19 @@
-window.onload = function () { return connect_to_event_server(); };
-// TODO: make test server to send a bunch of events!
+// @ts-ignore
+var PORT = 3001;
 var BUSY = false;
-function connect_to_event_server() {
+window.onload = function () {
+    connectToEventServer();
+};
+// TODO: make test server to send a bunch of events!
+function connectToEventServer() {
     console.log('connected to server!');
-    var event_server;
-    event_server = new WebSocket('ws://localhost:3001');
+    var event_server = new WebSocket("ws://localhost:".concat(PORT));
     event_server.onmessage = function (event) {
         console.log('received message:');
-        var received_event = JSON.parse(event.data);
-        console.log(received_event);
-        switch (received_event['type']) {
+        var event_parsed = JSON.parse(event.data);
+        var event_type = event_parsed['type'];
+        console.log(event_parsed);
+        switch (event_type) {
             case 'GET_STATUS':
                 console.log('GET_STATUS RECEIVED');
                 event_server.send(JSON.stringify({ content: BUSY ? 'BUSY' : 'READY' }));
@@ -17,7 +21,8 @@ function connect_to_event_server() {
             case 'FOLLOWER':
                 console.log('FOLLOWER RECEIVED');
                 BUSY = !BUSY;
-                var alert_1 = showMessage(received_event['content']);
+                console.log(event_parsed['image_path']);
+                var alert_1 = showMessage(event_parsed['content'], event_parsed['image_path']);
                 setTimeout(function () {
                     alert_1.remove();
                     BUSY = !BUSY;
@@ -25,7 +30,7 @@ function connect_to_event_server() {
                 }, 10000);
                 break;
             default:
-                console.log("unknown event: ".concat(received_event['type']));
+                console.log("unknown event: ".concat(event_type));
                 break;
         }
     };
@@ -33,29 +38,26 @@ function connect_to_event_server() {
     event_server.onclose = function (event) { return console.log('closed'); };
     event_server.onerror = function (event) { return console.log('error'); };
 }
-function createFollowMessage(user_name) {
+function createFollowMessage(user_name, image_path) {
     var paragraph = document.createElement('p');
-    var image = document.createElement('img');
     // TODO: pool of random images
     // TODO: add sound effects
-    image.src = '../media/images/girls-kiss.gif';
+    var image = document.createElement('img');
+    image.src = image_path;
     paragraph.appendChild(image);
     paragraph.appendChild(document.createElement('br'));
-    var text_1 = document.createTextNode('Hello ');
-    paragraph.appendChild(text_1);
+    paragraph.appendChild(document.createTextNode('Hello '));
     var user_name_span = document.createElement('span');
     user_name_span.className = 'user_name';
     user_name_span.innerText = user_name;
     paragraph.appendChild(user_name_span);
-    var text_2 = document.createTextNode(' !');
-    paragraph.appendChild(text_2);
+    paragraph.appendChild(document.createTextNode(' !'));
     paragraph.appendChild(document.createElement('br'));
-    var text_3 = document.createTextNode('Thank you for following!');
-    paragraph.appendChild(text_3);
+    paragraph.appendChild(document.createTextNode('Thank you for following!'));
     return paragraph;
 }
-function showMessage(user_name) {
-    var p = createFollowMessage(user_name);
+function showMessage(user_name, image_path) {
+    var p = createFollowMessage(user_name, image_path);
     document.body.appendChild(p);
     return p;
 }

@@ -1,18 +1,36 @@
+const fs = require('fs');
+const path = require('path');
 const ws = require("ws");
 require("dotenv").config();
 import {Queue} from "../utility/queue";
 
+// LIST OF EVENTS TO SUBSCRIBE TO
+//
+let events: Array<string> = [
+    'channel.follow', 'channel.update'
+];
 
 // EVENT TYPE
 //
 type Event = {
     type: string,
     content: string,
+    image_path: string,
 }
 
 // EVENT QUEUE
 //
 let event_queue = new Queue<Event>();
+
+// ALERT GIFS
+//
+let alert_gifs: Array<string> = [];
+
+const image_path = path.join(__dirname, 'media/images');
+console.log(image_path);
+fs.readdir(image_path, function (error, files) {
+    error ? console.log(error) : alert_gifs.push(...files);
+});
 
 
 // SERVER COMMUNICATING WITH OVERLAY
@@ -42,11 +60,6 @@ event_server.on("connection", async (ws) => {
     });
 });
 
-// LIST OF EVENTS TO SUBSCRIBE TO
-//
-let events: Array<string> = [
-    'channel.follow', 'channel.update'
-];
 
 // CLIENT LISTENING TO EVENTS
 //
@@ -100,14 +113,17 @@ event_handler.on('message', async function message(data) {
                     console.log(`${new_follower_name} just followed -> do something silly!`);
                     try {
                         //event_client.send(JSON.stringify(['Follow', new_follower_name]));
+                        console.log(`image path: ${image_path}\\${getRandomElementFromArray(alert_gifs)}`)
                         let new_event: Event = {
                             type: 'FOLLOWER',
-                            content: new_follower_name
+                            content: new_follower_name,
+                            image_path: `${image_path}\\${getRandomElementFromArray(alert_gifs)}`
                         }
                         event_queue.enqueue(new_event);
                         let status_request: Event = {
                             type: 'GET_STATUS',
-                            content: ''
+                            content: '',
+                            image_path: ''
                         }
                         event_client.send(JSON.stringify(status_request));
                     }
@@ -154,5 +170,9 @@ function getAuthHeaders(content_type: boolean = true): Record<string, string> {
     return headers;
 }
 
+function getRandomElementFromArray(array: Array<string>): string {
+    let rnd_index = Math.floor(Math.random() * array.length);
+    return array[rnd_index];
+}
 
 

@@ -1,3 +1,4 @@
+"use strict";
 var __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, generator) {
     function adopt(value) { return value instanceof P ? value : new P(function (resolve) { resolve(value); }); }
     return new (P || (P = Promise))(function (resolve, reject) {
@@ -34,14 +35,33 @@ var __generator = (this && this.__generator) || function (thisArg, body) {
         if (op[0] & 5) throw op[1]; return { value: op[0] ? op[1] : void 0, done: true };
     }
 };
-var _this = this;
+exports.__esModule = true;
+var fs = require('fs');
+var path = require('path');
 var ws = require("ws");
 require("dotenv").config();
+var queue_1 = require("../utility/queue");
+// LIST OF EVENTS TO SUBSCRIBE TO
+//
+var events = [
+    'channel.follow', 'channel.update'
+];
+// EVENT QUEUE
+//
+var event_queue = new queue_1.Queue();
+// ALERT GIFS
+//
+var alert_gifs = [];
+var image_path = path.join(__dirname, 'media/images');
+console.log(image_path);
+fs.readdir(image_path, function (error, files) {
+    error ? console.log(error) : alert_gifs.push.apply(alert_gifs, files);
+});
 // SERVER COMMUNICATING WITH OVERLAY
 //
 var event_server = new ws.Server({ port: 3001 });
 var event_client;
-event_server.on("connection", function (ws) { return __awaiter(_this, void 0, void 0, function () {
+event_server.on("connection", function (ws) { return __awaiter(void 0, void 0, void 0, function () {
     return __generator(this, function (_a) {
         switch (_a.label) {
             case 0:
@@ -49,22 +69,34 @@ event_server.on("connection", function (ws) { return __awaiter(_this, void 0, vo
                 return [4 /*yield*/, ws];
             case 1:
                 event_client = _a.sent();
-                event_client.on("message", function (data) { return console.log(data); });
+                event_client.on("message", function (response) {
+                    var message = JSON.parse(response)['content'];
+                    switch (message) {
+                        case 'BUSY':
+                            console.log('client is busy, wait for READY message');
+                            break;
+                        case 'READY':
+                            console.log('client is ready, processing next event, if available');
+                            if (event_queue.size() > 0) {
+                                var next_event = event_queue.dequeue();
+                                event_client.send(JSON.stringify(next_event));
+                            }
+                            break;
+                        default:
+                            console.log("unknown message: ".concat(message));
+                            break;
+                    }
+                });
                 return [2 /*return*/];
         }
     });
 }); });
-// LIST OF EVENTS TO SUBSCRIBE TO
-//
-var events = [
-    'channel.follow', 'channel.update'
-];
 // CLIENT LISTENING TO EVENTS
 //
 var event_handler = new ws.WebSocket("wss://eventsub-beta.wss.twitch.tv/ws");
 event_handler.on('message', function message(data) {
     return __awaiter(this, void 0, void 0, function () {
-        var parsed_data, metadata, message_type, _a, session_id, _i, events_1, event_type, event_sub_message, subscription_type, new_follower_name;
+        var parsed_data, metadata, message_type, _a, session_id, _i, events_1, event_type, event_sub_message, subscription_type, new_follower_name, new_event, status_request;
         return __generator(this, function (_b) {
             switch (_b.label) {
                 case 0:
@@ -123,7 +155,20 @@ event_handler.on('message', function message(data) {
                             new_follower_name = parsed_data["payload"]["event"]["user_name"];
                             console.log("".concat(new_follower_name, " just followed -> do something silly!"));
                             try {
-                                event_client.send(JSON.stringify(['Follow', new_follower_name]));
+                                //event_client.send(JSON.stringify(['Follow', new_follower_name]));
+                                console.log("image path: ".concat(image_path, "\\").concat(getRandomElementFromArray(alert_gifs)));
+                                new_event = {
+                                    type: 'FOLLOWER',
+                                    content: new_follower_name,
+                                    image_path: "".concat(image_path, "\\").concat(getRandomElementFromArray(alert_gifs))
+                                };
+                                event_queue.enqueue(new_event);
+                                status_request = {
+                                    type: 'GET_STATUS',
+                                    content: '',
+                                    image_path: ''
+                                };
+                                event_client.send(JSON.stringify(status_request));
                             }
                             catch (e) {
                                 console.log(e);
@@ -168,4 +213,8 @@ function getAuthHeaders(content_type) {
     if (content_type)
         headers["Content-Type"] = "application/json";
     return headers;
+}
+function getRandomElementFromArray(array) {
+    var rnd_index = Math.floor(Math.random() * array.length);
+    return array[rnd_index];
 }
