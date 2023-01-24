@@ -38,14 +38,20 @@ var __generator = (this && this.__generator) || function (thisArg, body) {
 exports.__esModule = true;
 var fs = require('fs');
 var path = require('path');
-var ws = require("ws");
-require("dotenv").config();
+var ws = require('ws');
+require('dotenv').config();
 var queue_1 = require("../utility/queue");
+var PORT = 3001;
 // LIST OF EVENTS TO SUBSCRIBE TO
 //
 var events = [
     'channel.follow', 'channel.update'
 ];
+var GET_STATUS = {
+    type: 'GET_STATUS',
+    content: '',
+    image_path: ''
+};
 // EVENT QUEUE
 //
 var event_queue = new queue_1.Queue();
@@ -57,19 +63,21 @@ console.log(image_path);
 fs.readdir(image_path, function (error, files) {
     error ? console.log(error) : alert_gifs.push.apply(alert_gifs, files);
 });
+// SET OF USER IDS TO TRACK WHO FOLLOWED TODAY ALREADY -> FOLLOW/UNFOLLOW CYCLE
+var user_id_set = new Set();
 // SERVER COMMUNICATING WITH OVERLAY
 //
-var event_server = new ws.Server({ port: 3001 });
+var event_server = new ws.Server({ port: PORT });
 var event_client;
-event_server.on("connection", function (ws) { return __awaiter(void 0, void 0, void 0, function () {
+event_server.on('connection', function (ws) { return __awaiter(void 0, void 0, void 0, function () {
     return __generator(this, function (_a) {
         switch (_a.label) {
             case 0:
-                console.log("new connection");
+                console.log('new connection');
                 return [4 /*yield*/, ws];
             case 1:
                 event_client = _a.sent();
-                event_client.on("message", function (response) {
+                event_client.on('message', function (response) {
                     var message = JSON.parse(response)['content'];
                     switch (message) {
                         case 'BUSY':
@@ -93,20 +101,20 @@ event_server.on("connection", function (ws) { return __awaiter(void 0, void 0, v
 }); });
 // CLIENT LISTENING TO EVENTS
 //
-var event_handler = new ws.WebSocket("wss://eventsub-beta.wss.twitch.tv/ws");
+var event_handler = new ws.WebSocket('wss://eventsub-beta.wss.twitch.tv/ws');
 event_handler.on('message', function message(data) {
     return __awaiter(this, void 0, void 0, function () {
-        var parsed_data, metadata, message_type, _a, session_id, _i, events_1, event_type, event_sub_message, subscription_type, new_follower_name, new_event, status_request;
+        var parsed_data, metadata, message_type, _a, session_id, _i, events_1, event_type, event_sub_message, subscription_type, new_follower_name, new_follower_id, new_event;
         return __generator(this, function (_b) {
             switch (_b.label) {
                 case 0:
                     parsed_data = JSON.parse(data);
-                    console.log("---------START------------");
+                    console.log('---------START------------');
                     console.log(parsed_data);
-                    console.log("----------END-------------");
-                    if (!messageVerrifed(parsed_data)) return [3 /*break*/, 9];
-                    metadata = parsed_data["metadata"];
-                    message_type = metadata["message_type"];
+                    console.log('----------END-------------');
+                    if (!messageVerrifed(parsed_data)) return [3 /*break*/, 10];
+                    metadata = parsed_data['metadata'];
+                    message_type = metadata['message_type'];
                     console.log("A message with type \"".concat(message_type, "\" was received!"));
                     _a = message_type;
                     switch (_a) {
@@ -115,15 +123,15 @@ event_handler.on('message', function message(data) {
                     }
                     return [3 /*break*/, 8];
                 case 1:
-                    session_id = parsed_data["payload"]["session"]["id"];
+                    session_id = parsed_data['payload']['session']['id'];
                     _i = 0, events_1 = events;
                     _b.label = 2;
                 case 2:
                     if (!(_i < events_1.length)) return [3 /*break*/, 5];
                     event_type = events_1[_i];
                     event_sub_message = createEventSubscription(event_type, session_id);
-                    return [4 /*yield*/, fetch("https://api.twitch.tv/helix/eventsub/subscriptions", {
-                            method: "POST",
+                    return [4 /*yield*/, fetch('https://api.twitch.tv/helix/eventsub/subscriptions', {
+                            method: 'POST',
                             headers: getAuthHeaders(),
                             body: JSON.stringify(event_sub_message)
                         })
@@ -137,41 +145,40 @@ event_handler.on('message', function message(data) {
                     return [3 /*break*/, 2];
                 case 5: 
                 // CHECK ALL EVENTS THE BOT IS SUBSCRIBED TO
-                return [4 /*yield*/, fetch("https://api.twitch.tv/helix/eventsub/subscriptions", {
-                        method: "GET",
+                return [4 /*yield*/, fetch('https://api.twitch.tv/helix/eventsub/subscriptions', {
+                        method: 'GET',
                         headers: getAuthHeaders(false)
                     })
-                        .then(function (response) { return response.json(); })
-                        .then(function (data) { return console.log(data); })];
+                        .then(function (response) { return response.json(); })];
                 case 6:
                     // CHECK ALL EVENTS THE BOT IS SUBSCRIBED TO
                     _b.sent();
                     return [3 /*break*/, 9];
                 case 7:
                     {
-                        subscription_type = metadata["subscription_type"];
+                        subscription_type = metadata['subscription_type'];
                         console.log("The notification type is ".concat(subscription_type));
-                        if (subscription_type === "channel.follow") {
-                            new_follower_name = parsed_data["payload"]["event"]["user_name"];
-                            console.log("".concat(new_follower_name, " just followed -> do something silly!"));
-                            try {
-                                //event_client.send(JSON.stringify(['Follow', new_follower_name]));
-                                console.log("image path: ".concat(image_path, "\\").concat(getRandomElementFromArray(alert_gifs)));
-                                new_event = {
-                                    type: 'FOLLOWER',
-                                    content: new_follower_name,
-                                    image_path: "".concat(image_path, "\\").concat(getRandomElementFromArray(alert_gifs))
-                                };
-                                event_queue.enqueue(new_event);
-                                status_request = {
-                                    type: 'GET_STATUS',
-                                    content: '',
-                                    image_path: ''
-                                };
-                                event_client.send(JSON.stringify(status_request));
+                        if (subscription_type === 'channel.follow') {
+                            new_follower_name = parsed_data['payload']['event']['user_name'];
+                            new_follower_id = parsed_data['payload']['event']['user_id'];
+                            if (!user_id_set.has(new_follower_id)) {
+                                user_id_set.add(new_follower_id);
+                                console.log("".concat(new_follower_name, " just followed -> do something silly!"));
+                                try {
+                                    new_event = {
+                                        type: 'FOLLOWER',
+                                        content: new_follower_name,
+                                        image_path: "".concat(image_path, "\\").concat(getRandomElementFromArray(alert_gifs))
+                                    };
+                                    event_queue.enqueue(new_event);
+                                    event_client.send(JSON.stringify(GET_STATUS));
+                                }
+                                catch (e) {
+                                    console.log(e);
+                                }
                             }
-                            catch (e) {
-                                console.log(e);
+                            else {
+                                console.log('user has followed today already!');
                             }
                         }
                         return [3 /*break*/, 9];
@@ -183,35 +190,39 @@ event_handler.on('message', function message(data) {
                         return [3 /*break*/, 9];
                     }
                     _b.label = 9;
-                case 9: return [2 /*return*/];
+                case 9: return [3 /*break*/, 11];
+                case 10:
+                    console.log('message not recognized!');
+                    _b.label = 11;
+                case 11: return [2 /*return*/];
             }
         });
     });
 });
 function createEventSubscription(subscription_type, session_id) {
     return {
-        "type": "".concat(subscription_type),
-        "version": "1",
-        "condition": {
-            "broadcaster_user_id": process.env.TWITCH_BROADCASTER_ID
+        'type': "".concat(subscription_type),
+        'version': '1',
+        'condition': {
+            'broadcaster_user_id': process.env.TWITCH_BROADCASTER_ID
         },
-        "transport": {
-            "method": "websocket",
-            "session_id": "".concat(session_id)
+        'transport': {
+            'method': 'websocket',
+            'session_id': "".concat(session_id)
         }
     };
 }
 function messageVerrifed(data) {
-    return "metadata" in data && "message_type" in data["metadata"];
+    return 'metadata' in data && 'message_type' in data['metadata'];
 }
 function getAuthHeaders(content_type) {
     if (content_type === void 0) { content_type = true; }
     var headers = {
-        "Authorization": "Bearer ".concat(process.env.TWITCH_OAUTH_TOKEN_CHANNEL),
-        "Client-Id": "".concat(process.env.TWITCH_CLIENT_ID_CHANNEL)
+        'Authorization': "Bearer ".concat(process.env.TWITCH_OAUTH_TOKEN_CHANNEL),
+        'Client-Id': "".concat(process.env.TWITCH_CLIENT_ID_CHANNEL)
     };
     if (content_type)
-        headers["Content-Type"] = "application/json";
+        headers['Content-Type'] = 'application/json';
     return headers;
 }
 function getRandomElementFromArray(array) {

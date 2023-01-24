@@ -52,6 +52,8 @@ function createFollowMessage(user_name: string, image_path: string): HTMLParagra
     // TODO: add sound effects
     let image = document.createElement('img');
     image.src = image_path;
+    image.height = 500;
+    image.width = 500;
     paragraph.appendChild(image);
     paragraph.appendChild(document.createElement('br'));
     paragraph.appendChild(document.createTextNode('Hello '));
