@@ -47,64 +47,66 @@ client.connect();
 client.on('message', async (channel, tags, message, self) => {
     if (self) return;
 
-    let command = message.split(' ', 1)[0].toLowerCase();
+    let [command, ...args] = message.split(' ');
+    console.log(command);
+    console.log(args);
 
-    if (command === '!hello') {
-        client.say(channel, `@${tags.username}, hello!`);
-    }
-    else if (command=== '!showemote') {
-        // TODO: implement 7tv (global + user)
-
-        let twitch_emotes = tags["emotes"];
-        let [emote_source, emote_name] = getFirstEmote(message, twitch_emotes);
-
-        let emote_url = '';
-        switch(emote_source) {
-            case 'BTTV_GLOBAL':
-            case 'BTTV_USER':
-                emote_url = `https://cdn.betterttv.net/emote/${emote_record[emote_source].emote_record[emote_name]}/3x`;
-                break;
-            case 'FFZ':
-                emote_url = `https://cdn.frankerfacez.com/emote/${emote_record[emote_source].emote_record[emote_name]}/4`;
-                break;
-            case 'SEVENTV_GLOBAL':
-            case 'SEVENTV_USER':
-                emote_url = `https://cdn.7tv.app/emote/${emote_record[emote_source].emote_record[emote_name]}/4x`;
-                break;
-            case 'TWITCH':
-                emote_url = `https://static-cdn.jtvnw.net/emoticons/v2/${emote_name}/default/light/3.0`;
-                break;
-            default:
+    switch (command) {
+        case '!hello': {
+            client.say(channel, `@${tags.username}, hello!`);
+            break;
+        }
+        case '!showemote': {
+            if (!emote_wall)
                 return;
-        }
 
-        console.log(`first emote is "${emote_name}" from ${emote_source}`);
-        console.log(emote_url);
+            let twitch_emotes = tags["emotes"];
+            let [emote_source, emote_name] = getFirstEmote(args, twitch_emotes);
 
-        // fails if emotewall is not connected
-        try {
-            emote_wall.send(emote_url);
+            let emote_url = getEmoteURL(emote_source, emote_name);
+
+            console.log(`first emote is "${emote_name}" from ${emote_source}`);
+            console.log(emote_url);
+
+            // fails if emotewall is not connected
+            try {
+                emote_wall.send(emote_url);
+            }
+            catch (e) {
+                console.log(e);
+            }
+            break;
         }
-        catch (e) {
-            console.log(e);
+        case '!yt':
+        case '!youtube': {
+            console.log(`Youtube link requested: ${args.join(' ')}`)
+            break;
+        }
+        default: {
+            console.log('not a command!');
+            break;
         }
     }
 });
 
-function getFirstEmote(message: string, twitch_emotes: Record<string, Array<string>>): [string, string] {
+//////////////////////
+//                  //
+//  EMOTE COMMANDS  //
+//                  //
+//////////////////////
+function getFirstEmote(args: Array<string>, twitch_emotes: Record<string, Array<string>>): [string, string] {
     type emote_info = {
         source: string,
         position: number,
         name: string,
     }
-    let message_split = message.split(' ');
 
     // determine information about first non twitch emote
     let non_twitch_emote: emote_info = { source: '', position: 500, name: '' };
     for (const emote_source in emote_record) {
         let emote_codes = Object.keys(emote_record[emote_source].emote_record);
-        let first_emote_name = message_split.filter(x => emote_codes.includes(x))[0];
-        let first_emote_pos = message.indexOf(first_emote_name);
+        let first_emote_name = args.filter(x => emote_codes.includes(x))[0];
+        let first_emote_pos = args.indexOf(first_emote_name);
         if (first_emote_pos < 0) first_emote_pos = 500;
         if (first_emote_pos < non_twitch_emote.position) {
             non_twitch_emote.source = emote_source;
@@ -129,4 +131,26 @@ function getFirstEmote(message: string, twitch_emotes: Record<string, Array<stri
     return non_twitch_emote.position < twitch_emote.position
         ? [non_twitch_emote.source, non_twitch_emote.name]
         : [twitch_emote.source, twitch_emote.name];
+}
+
+function getEmoteURL(emote_source: string, emote_name: string): string {
+    let emote_url = '';
+    switch(emote_source) {
+        case 'BTTV_GLOBAL':
+        case 'BTTV_USER':
+            emote_url = `https://cdn.betterttv.net/emote/${emote_record[emote_source].emote_record[emote_name]}/3x`;
+            break;
+        case 'FFZ':
+            emote_url = `https://cdn.frankerfacez.com/emote/${emote_record[emote_source].emote_record[emote_name]}/4`;
+            break;
+        case 'SEVENTV_GLOBAL':
+        case 'SEVENTV_USER':
+            emote_url = `https://cdn.7tv.app/emote/${emote_record[emote_source].emote_record[emote_name]}/4x`;
+            break;
+        case 'TWITCH':
+            emote_url = `https://static-cdn.jtvnw.net/emoticons/v2/${emote_name}/default/light/3.0`;
+            break;
+    }
+
+    return emote_url;
 }

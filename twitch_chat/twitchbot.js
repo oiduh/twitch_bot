@@ -91,57 +91,60 @@ client.on("connected", function () { return __awaiter(void 0, void 0, void 0, fu
 }); });
 client.connect();
 client.on('message', function (channel, tags, message, self) { return __awaiter(void 0, void 0, void 0, function () {
-    var command, twitch_emotes, _a, emote_source, emote_name, emote_url;
-    return __generator(this, function (_b) {
+    var _a, command, args, twitch_emotes, _b, emote_source, emote_name, emote_url;
+    return __generator(this, function (_c) {
         if (self)
             return [2 /*return*/];
-        command = message.split(' ', 1)[0].toLowerCase();
-        if (command === '!hello') {
-            client.say(channel, "@".concat(tags.username, ", hello!"));
-        }
-        else if (command === '!showemote') {
-            twitch_emotes = tags["emotes"];
-            _a = getFirstEmote(message, twitch_emotes), emote_source = _a[0], emote_name = _a[1];
-            emote_url = '';
-            switch (emote_source) {
-                case 'BTTV_GLOBAL':
-                case 'BTTV_USER':
-                    emote_url = "https://cdn.betterttv.net/emote/".concat(emote_record[emote_source].emote_record[emote_name], "/3x");
-                    break;
-                case 'FFZ':
-                    emote_url = "https://cdn.frankerfacez.com/emote/".concat(emote_record[emote_source].emote_record[emote_name], "/4");
-                    break;
-                case 'SEVENTV_GLOBAL':
-                case 'SEVENTV_USER':
-                    emote_url = "https://cdn.7tv.app/emote/".concat(emote_record[emote_source].emote_record[emote_name], "/4x");
-                    break;
-                case 'TWITCH':
-                    emote_url = "https://static-cdn.jtvnw.net/emoticons/v2/".concat(emote_name, "/default/light/3.0");
-                    break;
-                default:
+        _a = message.split(' '), command = _a[0], args = _a.slice(1);
+        console.log(command);
+        console.log(args);
+        switch (command) {
+            case '!hello': {
+                client.say(channel, "@".concat(tags.username, ", hello!"));
+                break;
+            }
+            case '!showemote': {
+                if (!emote_wall)
                     return [2 /*return*/];
+                twitch_emotes = tags["emotes"];
+                _b = getFirstEmote(args, twitch_emotes), emote_source = _b[0], emote_name = _b[1];
+                emote_url = getEmoteURL(emote_source, emote_name);
+                console.log("first emote is \"".concat(emote_name, "\" from ").concat(emote_source));
+                console.log(emote_url);
+                // fails if emotewall is not connected
+                try {
+                    emote_wall.send(emote_url);
+                }
+                catch (e) {
+                    console.log(e);
+                }
+                break;
             }
-            console.log("first emote is \"".concat(emote_name, "\" from ").concat(emote_source));
-            console.log(emote_url);
-            // fails if emotewall is not connected
-            try {
-                emote_wall.send(emote_url);
+            case '!yt':
+            case '!youtube': {
+                console.log("Youtube link requested: ".concat(args.join(' ')));
+                break;
             }
-            catch (e) {
-                console.log(e);
+            default: {
+                console.log('not a command!');
+                break;
             }
         }
         return [2 /*return*/];
     });
 }); });
-function getFirstEmote(message, twitch_emotes) {
-    var message_split = message.split(' ');
+//////////////////////
+//                  //
+//  EMOTE COMMANDS  //
+//                  //
+//////////////////////
+function getFirstEmote(args, twitch_emotes) {
     // determine information about first non twitch emote
     var non_twitch_emote = { source: '', position: 500, name: '' };
     var _loop_1 = function (emote_source) {
         var emote_codes = Object.keys(emote_record[emote_source].emote_record);
-        var first_emote_name = message_split.filter(function (x) { return emote_codes.includes(x); })[0];
-        var first_emote_pos = message.indexOf(first_emote_name);
+        var first_emote_name = args.filter(function (x) { return emote_codes.includes(x); })[0];
+        var first_emote_pos = args.indexOf(first_emote_name);
         if (first_emote_pos < 0)
             first_emote_pos = 500;
         if (first_emote_pos < non_twitch_emote.position) {
@@ -167,4 +170,24 @@ function getFirstEmote(message, twitch_emotes) {
     return non_twitch_emote.position < twitch_emote.position
         ? [non_twitch_emote.source, non_twitch_emote.name]
         : [twitch_emote.source, twitch_emote.name];
+}
+function getEmoteURL(emote_source, emote_name) {
+    var emote_url = '';
+    switch (emote_source) {
+        case 'BTTV_GLOBAL':
+        case 'BTTV_USER':
+            emote_url = "https://cdn.betterttv.net/emote/".concat(emote_record[emote_source].emote_record[emote_name], "/3x");
+            break;
+        case 'FFZ':
+            emote_url = "https://cdn.frankerfacez.com/emote/".concat(emote_record[emote_source].emote_record[emote_name], "/4");
+            break;
+        case 'SEVENTV_GLOBAL':
+        case 'SEVENTV_USER':
+            emote_url = "https://cdn.7tv.app/emote/".concat(emote_record[emote_source].emote_record[emote_name], "/4x");
+            break;
+        case 'TWITCH':
+            emote_url = "https://static-cdn.jtvnw.net/emoticons/v2/".concat(emote_name, "/default/light/3.0");
+            break;
+    }
+    return emote_url;
 }
