@@ -2,6 +2,7 @@ const ChatServer = require("ws").Server;
 const tmi = require("tmi.js");
 require("dotenv").config();
 import * as Emotes from "./utility/bttv_fetch";
+const ytdl = require('ytdl-core');
 
 
 // TODO: add command -> mod, broadcaster only -> to change emote mode
@@ -25,6 +26,8 @@ const client = new tmi.Client({
 
 let emote_wall;
 let emote_record: Record<string, Emotes.EMOTES> = {};
+
+let YOUTUBE_REGEX: RegExp = /^(http(s)?:\/\/)?((w){3}.)?youtu(be|.be)?(\.com)?\/.+/gm;
 
 server.on("connection", async (ws) => {
     console.log("new connection");
@@ -79,7 +82,22 @@ client.on('message', async (channel, tags, message, self) => {
         }
         case '!yt':
         case '!youtube': {
-            console.log(`Youtube link requested: ${args.join(' ')}`)
+            if (args.length < 1) {
+                console.log('Youtube link not provided!');
+                return;
+            }
+
+            let link = args[1];
+            if (YOUTUBE_REGEX.test(link)) {
+                console.log('YOUTUBE LINK LEGIT!');
+            }
+            else {
+                console.log('NOT A YOUTUBE LINK!')
+            }
+
+            let info = await ytdl.getInfo(link);
+            console.log(info);
+
             break;
         }
         default: {
