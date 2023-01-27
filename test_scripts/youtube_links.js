@@ -35,6 +35,7 @@ var __generator = (this && this.__generator) || function (thisArg, body) {
     }
 };
 var _this = this;
+var fs = require('fs');
 var ytdl = require('ytdl-core');
 var yt_url = 'https://www.youtube.com/watch?v=Rxc7u9p0VAU';
 //let yt_url = 'https://www.youtube.com/watch?v=RXC7U9P0VA1';
@@ -44,9 +45,10 @@ var test = function (url) { return __awaiter(_this, void 0, void 0, function () 
             case 0: return [4 /*yield*/, ytdl.getBasicInfo(url)
                     .then(function (res) {
                     var meta_info = res['videoDetails'];
-                    console.log(meta_info);
                     //let meta_info = res['player']['videoDetails'];
                     //console.log(meta_info);
+                    var title = meta_info['title'];
+                    console.log(title);
                     var video_length_in_sec = meta_info['lengthSeconds'];
                     console.log("The length of this video is: ".concat(Math.floor(video_length_in_sec / 60), "min and ").concat(video_length_in_sec % 60, "sec"));
                     var view_count = meta_info['viewCount'];
@@ -54,11 +56,14 @@ var test = function (url) { return __awaiter(_this, void 0, void 0, function () 
                     var age_restricted = meta_info['age_restricted'];
                     console.log("The video is ".concat(age_restricted ? '' : 'NOT', " age restricted"));
                     var available_formats = res['formats'];
+                    console.log(available_formats);
                     var mp4 = available_formats.filter(function (x) { return x['mimeType'].includes('video/mp4') && x['height'] <= 720; });
-                    console.log(mp4);
+                    //console.log(mp4);
                     console.log('---');
                     var best_qual = mp4.sort(function (a, b) { return (a['height'] > b['height']) ? -1 : (a['height'] < b['height']) ? 1 : 0; })[0];
                     console.log(best_qual);
+                    //ytdl(url, { filter: format => format.itag === best_qual['itag'] })
+                    //    .pipe(fs.createWriteStream('video.mp4'));
                 })["catch"](function (e) { return console.log(e); })];
             case 1:
                 _a.sent();
