@@ -37,7 +37,7 @@ var __generator = (this && this.__generator) || function (thisArg, body) {
 var _this = this;
 var fs = require('fs');
 var ytdl = require('ytdl-core');
-var yt_url = 'https://www.youtube.com/watch?v=Rxc7u9p0VAU';
+var yt_url = 'https://www.youtube.com/watch?v=DEEJK4zbSS8';
 //let yt_url = 'https://www.youtube.com/watch?v=RXC7U9P0VA1';
 var test = function (url) { return __awaiter(_this, void 0, void 0, function () {
     return __generator(this, function (_a) {
@@ -57,13 +57,16 @@ var test = function (url) { return __awaiter(_this, void 0, void 0, function () 
                     console.log("The video is ".concat(age_restricted ? '' : 'NOT', " age restricted"));
                     var available_formats = res['formats'];
                     console.log(available_formats);
-                    var mp4 = available_formats.filter(function (x) { return x['mimeType'].includes('video/mp4') && x['height'] <= 720; });
+                    var video = available_formats.filter(function (x) { return x['mimeType'].includes('video/mp4') && x['height'] <= 720; });
                     //console.log(mp4);
                     console.log('---');
-                    var best_qual = mp4.sort(function (a, b) { return (a['height'] > b['height']) ? -1 : (a['height'] < b['height']) ? 1 : 0; })[0];
+                    var best_qual = video.sort(function (a, b) { return (a['height'] > b['height']) ? -1 : (a['height'] < b['height']) ? 1 : 0; })[0];
                     console.log(best_qual);
                     //ytdl(url, { filter: format => format.itag === best_qual['itag'] })
-                    //    .pipe(fs.createWriteStream('video.mp4'));
+                    ytdl(url, { quality: 'highestaudio' })
+                        .pipe(fs.createWriteStream('video.mp4'));
+                    // use to merge audio and video
+                    // https://github.com/fent/node-ytdl-core/blob/HEAD/example/ffmpeg.js
                 })["catch"](function (e) { return console.log(e); })];
             case 1:
                 _a.sent();

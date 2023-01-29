@@ -1,0 +1,41 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="UTF-8">
+    <title>Media share</title>
+    <link href="https://vjs.zencdn.net/7.21.1/video-js.css"
+          rel="stylesheet"
+    />
+</head>
+<body>
+    <video
+            id="player"
+            class="video-js"
+            width="800"
+            height="450"
+            data-setup='{
+                "controls": true
+            }'
+            autofocus
+    >
+        <source src="../events/media/videos/video.mp4" type="video/mp4">
+    </video>
+
+    <script src="https://vjs.zencdn.net/7.21.1/video.min.js"></script>
+    <script>
+        // TODO: more controls -> forward, backward, volume, skip (get next video from server) etc.
+        let player = videojs('player', {
+            userActions: {
+                hotkeys: true
+            }
+        });
+
+        // TODO: timestamps + duration
+        player.ready(function() {
+            let start = 45,
+                duration = player.duration();
+            player.currentTime(start);
+        });
+    </script>
+</body>
+</html>

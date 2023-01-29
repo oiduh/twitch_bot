@@ -1,7 +1,7 @@
 const fs = require('fs');
 const ytdl = require('ytdl-core');
 
-let yt_url = 'https://www.youtube.com/watch?v=Rxc7u9p0VAU';
+let yt_url = 'https://www.youtube.com/watch?v=DEEJK4zbSS8';
 //let yt_url = 'https://www.youtube.com/watch?v=RXC7U9P0VA1';
 let test = async (url) => {
     await ytdl.getBasicInfo(url)
@@ -36,7 +36,12 @@ let test = async (url) => {
                 console.log(best_qual);
 
                 //ytdl(url, { filter: format => format.itag === best_qual['itag'] })
-                //    .pipe(fs.createWriteStream('video.mp4'));
+                ytdl(url, { quality: 'highestaudio' })
+                    .pipe(fs.createWriteStream('video.mp4'));
+
+
+                // use to merge audio and video
+                // https://github.com/fent/node-ytdl-core/blob/HEAD/example/ffmpeg.js
         })
         .catch(e => console.log(e));
 }
