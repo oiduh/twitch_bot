@@ -6,6 +6,11 @@
     <link href="https://vjs.zencdn.net/7.21.1/video-js.css"
           rel="stylesheet"
     />
+    <style>
+        .vjs-tech {
+            pointer-events: none;
+        }
+    </style>
 </head>
 <body>
     <video
@@ -26,12 +31,34 @@
         // TODO: more controls -> forward, backward, volume, skip (get next video from server) etc.
         let player = videojs('player', {
             userActions: {
-                hotkeys: true
+                hotkeys: function(event) {
+                    // `space` key = play/pause
+                    if (event.which === 32) {
+                        console.log('pause button pressed');
+                        this.paused() ? this.play() : this.pause();
+                    }
+
+                    if (event.which === 65) {
+                        console.log('backward button pressed');
+                        let new_time = Math.max(this.currentTime()-5, 0);
+                        this.currentTime(new_time);
+                    }
+
+                    if (event.which === 68) {
+                        console.log('forward button pressed');
+                        let new_time = Math.min(this.currentTime()+5, this.duration());
+                        this.currentTime(new_time);
+                    }
+                }
             }
         });
 
         // TODO: timestamps + duration
         player.ready(function() {
+            player.controlBar.hide();
+            player.bigPlayButton.hide();
+
+
             let start = 45,
                 duration = player.duration();
             player.currentTime(start);
