@@ -1,14 +1,14 @@
-const ChatServer = require("ws").Server;
+const Server = require("ws").Server;
 const tmi = require("tmi.js");
 require("dotenv").config();
 import * as Emotes from "./utility/bttv_fetch";
 const ytdl = require('ytdl-core');
+import {Queue} from "../utility/queue";
 
 
-// TODO: add command -> mod, broadcaster only -> to change emote mode
-
-const server = new ChatServer({port: 3000});
-
+//
+// CLIENT FOR  TWITCH IRC
+//
 const client = new tmi.Client({
     options: {
         debug: true
@@ -23,18 +23,45 @@ const client = new tmi.Client({
     },
     channels: ['oiduh']
 });
+client.connect();
 
+
+//
+// SERVER PROCESSING EMOTE WALL
+//
+const EMOTE_WALL_PORT = 3000;
+const emote_wall_server = new Server({port: EMOTE_WALL_PORT});
 let emote_wall;
 let emote_record: Record<string, Emotes.EMOTES> = {};
 
-let YOUTUBE_REGEX: RegExp = /^(http(s)?:\/\/)?((w){3}.)?youtu(be|.be)?(\.com)?\/.+/gm;
-
-server.on("connection", async (ws) => {
-    console.log("new connection");
+emote_wall_server.on("connection", async (ws) => {
+    console.log("new emote wall connection");
     emote_wall = await ws;
     emote_wall.on("message", (data) => console.log(data));
 });
 
+
+//
+// SERVER PROCESSING MEDIA SHARE (YOUTUBE)
+//
+const MEDIA_SHARE_PORT = 3002;
+const media_share_server = new Server({port: MEDIA_SHARE_PORT});
+let media_share;
+//let media_share_queue = new Queue<string>();
+let YOUTUBE_REGEX: RegExp = /^(http(s)?:\/\/)?((w){3}.)?youtu(be|.be)?(\.com)?\/.+/gm;
+
+media_share_server.on("connection", async (ws) => {
+    console.log("new media share connection");
+    media_share = await ws;
+    media_share.on("message", (data) => console.log(data));
+});
+
+
+//
+// INITIALIZE CONNECTION
+//   GATHER INFORMATION ABOUT EMOTES ENABLED IN CHANNEL
+//   TODO: REFRESH COMMAND IF NEW EMOTES ARE ADDED
+//
 client.on("connected", async () => {
     console.log("connected to twitch chat!");
 
@@ -45,7 +72,6 @@ client.on("connected", async () => {
 })
 
 
-client.connect();
 
 client.on('message', async (channel, tags, message, self) => {
     if (self) return;

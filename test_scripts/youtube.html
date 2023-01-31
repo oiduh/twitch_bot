@@ -11,6 +11,27 @@
             pointer-events: none;
         }
     </style>
+    <script>
+        const PORT = 3002;
+
+        window.onload = () => connect_to_server();
+
+        function connect_to_server() {
+            let socket;
+            socket = new WebSocket(`ws://localhost:${PORT}`);
+
+            socket.onmessage = (image_source) => {
+                console.log('received message:')
+                console.log(image_source.data);
+                new Emote(image_source.data, DEFAULT_EMOTE_HEIGHT).show();
+            };
+
+            socket.onopen = (event) => console.log('connected');
+            socket.onclose = (event) => console.log('closed');
+            socket.onerror = (event) => console.log('error');
+        }
+
+    </script>
 </head>
 <body>
     <video
