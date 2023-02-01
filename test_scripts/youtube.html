@@ -3,18 +3,14 @@
 <head>
     <meta charset="UTF-8">
     <title>Media share</title>
-    <link href="https://vjs.zencdn.net/7.21.1/video-js.css"
-          rel="stylesheet"
-    />
-    <style>
-        .vjs-tech {
-            pointer-events: none;
-        }
-    </style>
+    <link type="text/css" rel="stylesheet" href="../node_modules/video.js/dist/video-js.min.css"/>
+    <script src="../node_modules/video.js/dist/video.min.js"></script>
+
+    <script src="../node_modules/videojs-youtube/dist/Youtube.min.js"></script>
     <script>
         const PORT = 3002;
 
-        window.onload = () => connect_to_server();
+        //window.onload = () => connect_to_server();
 
         function connect_to_server() {
             let socket;
@@ -30,27 +26,34 @@
             socket.onclose = (event) => console.log('closed');
             socket.onerror = (event) => console.log('error');
         }
-
     </script>
 </head>
 <body>
-    <video
-            id="player"
-            class="video-js"
-            width="800"
-            height="450"
-            data-setup='{
-                "controls": true
-            }'
-            autofocus
-    >
-        <source src="../events/media/videos/video.mp4" type="video/mp4">
+    <video id="player" class="video-js" autofocus>
     </video>
+    <div class="time">
+        <time id="time-elapsed">00:00</time>
+        <span> / </span>
+        <time id="duration">00:00</time>
+    </div>
 
-    <script src="https://vjs.zencdn.net/7.21.1/video.min.js"></script>
     <script>
-        // TODO: more controls -> forward, backward, volume, skip (get next video from server) etc.
+        let video = document.getElementById('player');
+        let time_elapsed = document.getElementById('time-elapsed');
+        let duration = document.getElementById('duration');
+
         let player = videojs('player', {
+            width: 400,
+            height: 225,
+            controlBar: false,
+            bigPlayButton: false,
+
+            techOrder: ['youtube'],
+            sources: [{
+                type: 'video/youtube',
+                src: 'http://www.youtube.com/watch?v=qGyPuey-1Jw'
+            }],
+
             userActions: {
                 hotkeys: function(event) {
                     // `space` key = play/pause
@@ -74,16 +77,22 @@
             }
         });
 
-        // TODO: timestamps + duration
-        player.ready(function() {
-            player.controlBar.hide();
-            player.bigPlayButton.hide();
-
-
-            let start = 45,
-                duration = player.duration();
-            player.currentTime(start);
+        player.on('loadedmetadata', () => {
+            console.log('meta data loaded');
+            let full_duration = Math.floor(player.duration());
+            let min = Math.floor(full_duration/60).toString().padStart(2, '0'),
+                sec = (full_duration%60).toString().padStart(2, '0');
+            duration.innerText = `${min}:${sec}`;
         });
+
+        player.on('timeupdate', () => {
+            console.log('time updated');
+            let current_time = Math.floor(player.currentTime());
+            let min = Math.floor(current_time/60).toString().padStart(2, '0'),
+                sec = (current_time%60).toString().padStart(2, '0');
+            time_elapsed.innerText = `${min}:${sec}`;
+        });
+
     </script>
 </body>
 </html>

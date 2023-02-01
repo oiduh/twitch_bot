@@ -3,7 +3,7 @@ const tmi = require("tmi.js");
 require("dotenv").config();
 import * as Emotes from "./utility/bttv_fetch";
 const ytdl = require('ytdl-core');
-import {Queue} from "../utility/queue";
+//import {Queue} from "../utility/queue";
 
 
 //
