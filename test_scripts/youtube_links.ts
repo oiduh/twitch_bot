@@ -1,7 +1,7 @@
 const fs = require('fs');
 const ytdl = require('ytdl-core');
 
-let yt_url = 'https://www.youtube.com/watch?v=DEEJK4zbSS8';
+let yt_url = 'https://www.youtube.com/watch?v=oJca6zoI50E';
 //let yt_url = 'https://www.youtube.com/watch?v=RXC7U9P0VA1';
 let test = async (url) => {
     await ytdl.getBasicInfo(url)
@@ -25,10 +25,10 @@ let test = async (url) => {
                 console.log(`The video is ${age_restricted ? '' : 'NOT'} age restricted`);
 
                 let available_formats = res['formats'];
-                console.log(available_formats);
+                //console.log(available_formats);
 
-                let video = available_formats.filter(x => x['mimeType'].includes('video/mp4') && x['height'] <= 720);
-                //console.log(mp4);
+                let video = available_formats.filter(x => x['mimeType'].includes('video/mp4') && x['mimeType'].includes('mp4a') && x['height'] <= 720);
+                //console.log(video);
 
                 console.log('---');
 
@@ -36,7 +36,7 @@ let test = async (url) => {
                 console.log(best_qual);
 
                 //ytdl(url, { filter: format => format.itag === best_qual['itag'] })
-                ytdl(url, { quality: 'highestaudio' })
+                ytdl(url, { filter: format => format.itag === best_qual['itag'] })
                     .pipe(fs.createWriteStream('video.mp4'));
 
 
