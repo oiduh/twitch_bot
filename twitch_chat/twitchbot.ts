@@ -47,8 +47,6 @@ emote_wall_server.on("connection", async (ws) => {
 const MEDIA_SHARE_PORT = 3002;
 const media_share_server = new Server({port: MEDIA_SHARE_PORT});
 let media_share;
-//let media_share_queue = new Queue<string>();
-let YOUTUBE_REGEX: RegExp = /^(http(s)?:\/\/)?((w){3}.)?youtu(be|.be)?(\.com)?\/.+/gm;
 
 media_share_server.on("connection", async (ws) => {
     console.log("new media share connection");
@@ -113,17 +111,14 @@ client.on('message', async (channel, tags, message, self) => {
                 return;
             }
 
-            let link = args[1];
-            if (YOUTUBE_REGEX.test(link)) {
-                console.log('YOUTUBE LINK LEGIT!');
+            let link = args[0];
+            try {
+                await ytdl.getInfo(link);
+                media_share.send(link);
             }
-            else {
-                console.log('NOT A YOUTUBE LINK!')
+            catch (e) {
+                console.log('video does not seem to exist');
             }
-
-            let info = await ytdl.getInfo(link);
-            console.log(info);
-
             break;
         }
         default: {

@@ -36,12 +36,15 @@ var __generator = (this && this.__generator) || function (thisArg, body) {
     }
 };
 exports.__esModule = true;
-var ChatServer = require("ws").Server;
+var Server = require("ws").Server;
 var tmi = require("tmi.js");
 require("dotenv").config();
 var Emotes = require("./utility/bttv_fetch");
-// TODO: add command -> mod, broadcaster only -> to change emote mode
-var server = new ChatServer({ port: 3000 });
+var ytdl = require('ytdl-core');
+//import {Queue} from "../utility/queue";
+//
+// CLIENT FOR  TWITCH IRC
+//
 var client = new tmi.Client({
     options: {
         debug: true
@@ -56,13 +59,19 @@ var client = new tmi.Client({
     },
     channels: ['oiduh']
 });
+client.connect();
+//
+// SERVER PROCESSING EMOTE WALL
+//
+var EMOTE_WALL_PORT = 3000;
+var emote_wall_server = new Server({ port: EMOTE_WALL_PORT });
 var emote_wall;
 var emote_record = {};
-server.on("connection", function (ws) { return __awaiter(void 0, void 0, void 0, function () {
+emote_wall_server.on("connection", function (ws) { return __awaiter(void 0, void 0, void 0, function () {
     return __generator(this, function (_a) {
         switch (_a.label) {
             case 0:
-                console.log("new connection");
+                console.log("new emote wall connection");
                 return [4 /*yield*/, ws];
             case 1:
                 emote_wall = _a.sent();
@@ -71,6 +80,31 @@ server.on("connection", function (ws) { return __awaiter(void 0, void 0, void 0,
         }
     });
 }); });
+//
+// SERVER PROCESSING MEDIA SHARE (YOUTUBE)
+//
+var MEDIA_SHARE_PORT = 3002;
+var media_share_server = new Server({ port: MEDIA_SHARE_PORT });
+var media_share;
+var YOUTUBE_REGEX = /^(http(s)?:\/\/)?((w){3}.)?youtu(be|.be)?(\.com)?\/.+/gm;
+media_share_server.on("connection", function (ws) { return __awaiter(void 0, void 0, void 0, function () {
+    return __generator(this, function (_a) {
+        switch (_a.label) {
+            case 0:
+                console.log("new media share connection");
+                return [4 /*yield*/, ws];
+            case 1:
+                media_share = _a.sent();
+                media_share.on("message", function (data) { return console.log(data); });
+                return [2 /*return*/];
+        }
+    });
+}); });
+//
+// INITIALIZE CONNECTION
+//   GATHER INFORMATION ABOUT EMOTES ENABLED IN CHANNEL
+//   TODO: REFRESH COMMAND IF NEW EMOTES ARE ADDED
+//
 client.on("connected", function () { return __awaiter(void 0, void 0, void 0, function () {
     var emote_containers, _i, emote_containers_1, emote_container;
     return __generator(this, function (_a) {
@@ -89,48 +123,78 @@ client.on("connected", function () { return __awaiter(void 0, void 0, void 0, fu
         }
     });
 }); });
-client.connect();
 client.on('message', function (channel, tags, message, self) { return __awaiter(void 0, void 0, void 0, function () {
-    var _a, command, args, twitch_emotes, _b, emote_source, emote_name, emote_url;
-    return __generator(this, function (_c) {
-        if (self)
-            return [2 /*return*/];
-        _a = message.split(' '), command = _a[0], args = _a.slice(1);
-        console.log(command);
-        console.log(args);
-        switch (command) {
-            case '!hello': {
-                client.say(channel, "@".concat(tags.username, ", hello!"));
-                break;
-            }
-            case '!showemote': {
-                if (!emote_wall)
+    var _a, command, args, _b, twitch_emotes, _c, emote_source, emote_name, emote_url, link, info;
+    return __generator(this, function (_d) {
+        switch (_d.label) {
+            case 0:
+                if (self)
                     return [2 /*return*/];
-                twitch_emotes = tags["emotes"];
-                _b = getFirstEmote(args, twitch_emotes), emote_source = _b[0], emote_name = _b[1];
-                emote_url = getEmoteURL(emote_source, emote_name);
-                console.log("first emote is \"".concat(emote_name, "\" from ").concat(emote_source));
-                console.log(emote_url);
-                // fails if emotewall is not connected
-                try {
-                    emote_wall.send(emote_url);
+                _a = message.split(' '), command = _a[0], args = _a.slice(1);
+                console.log(command);
+                console.log(args);
+                _b = command;
+                switch (_b) {
+                    case '!hello': return [3 /*break*/, 1];
+                    case '!showemote': return [3 /*break*/, 2];
+                    case '!yt': return [3 /*break*/, 3];
+                    case '!youtube': return [3 /*break*/, 3];
                 }
-                catch (e) {
-                    console.log(e);
+                return [3 /*break*/, 5];
+            case 1:
+                {
+                    client.say(channel, "@".concat(tags.username, ", hello!"));
+                    return [3 /*break*/, 6];
                 }
-                break;
-            }
-            case '!yt':
-            case '!youtube': {
-                console.log("Youtube link requested: ".concat(args.join(' ')));
-                break;
-            }
-            default: {
-                console.log('not a command!');
-                break;
-            }
+                _d.label = 2;
+            case 2:
+                {
+                    if (!emote_wall)
+                        return [2 /*return*/];
+                    twitch_emotes = tags["emotes"];
+                    _c = getFirstEmote(args, twitch_emotes), emote_source = _c[0], emote_name = _c[1];
+                    emote_url = getEmoteURL(emote_source, emote_name);
+                    console.log("first emote is \"".concat(emote_name, "\" from ").concat(emote_source));
+                    console.log(emote_url);
+                    // fails if emotewall is not connected
+                    try {
+                        emote_wall.send(emote_url);
+                    }
+                    catch (e) {
+                        console.log(e);
+                    }
+                    return [3 /*break*/, 6];
+                }
+                _d.label = 3;
+            case 3:
+                if (args.length < 1) {
+                    console.log('Youtube link not provided!');
+                    return [2 /*return*/];
+                }
+                link = args[0];
+                if (YOUTUBE_REGEX.test(link)) {
+                    console.log('YOUTUBE LINK LEGIT!');
+                }
+                else {
+                    console.log('NOT A YOUTUBE LINK!');
+                }
+                if (ytdl.validateURL(link))
+                    console.log('video exists');
+                else
+                    console.log('video does not exist');
+                return [4 /*yield*/, ytdl.getInfo(link)];
+            case 4:
+                info = _d.sent();
+                console.log(info);
+                return [3 /*break*/, 6];
+            case 5:
+                {
+                    console.log('not a command!');
+                    return [3 /*break*/, 6];
+                }
+                _d.label = 6;
+            case 6: return [2 /*return*/];
         }
-        return [2 /*return*/];
     });
 }); });
 //////////////////////
