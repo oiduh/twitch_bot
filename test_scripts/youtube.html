@@ -70,18 +70,31 @@
             }
         });
 
-        player.playlist([{
-            sources: [{
-                type: 'video/youtube',
-                src: 'https://www.youtube.com/watch?v=qGyPuey-1Jw'
-            }]
-        }, {
-            sources: [{
-                type: 'video/youtube',
-                src: 'https://www.youtube.com/watch?v=DEEJK4zbSS8'
-            }]
-        },
-        ])
+        player.playlist([
+            {
+                sources: [{
+                    type: 'video/youtube',
+                    src: 'https://www.youtube.com/watch?v=qGyPuey-1Jw'
+                }]
+            }, {
+                sources: [{
+                    type: 'video/youtube',
+                    src: 'https://www.youtube.com/watch?v=DEEJK4zbSS8'
+                }]
+            },
+        ]);
+
+        /*
+
+        TODO: ideas how to combine with requests from twitch + message system
+
+            1) if media share not enabled -> no video/overlay -> should be handled in obs
+                1.1) if not enabled, but queue opened -> accumulate list of link on server
+                1.2) if not enabled and queue closed -> ignore requests
+            2) if media share enabled -> load video list from server and create playlist
+                2.1) start playing videos in order until last video or media share closed -> cleanup
+                2.2) whenever empty -> load new videos if available (load in in chunks possible)
+         */
 
         player.playlist.autoadvance(0);
 
@@ -91,6 +104,7 @@
             let min = Math.floor(full_duration/60).toString().padStart(2, '0'),
                 sec = (full_duration%60).toString().padStart(2, '0');
             duration.innerText = `${min}:${sec}`;
+            console.log(player.playlist());
             player.play();
         });
 
