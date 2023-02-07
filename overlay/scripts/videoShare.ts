@@ -1,32 +1,37 @@
 // @ts-ignore
-var PORT = 3002;
-var player;
+const PORT = 3002;
+let player;
+
 function connectToChatServer() {
-    var chatServer;
+    let chatServer: WebSocket;
     try {
-        chatServer = new WebSocket("ws://localhost:".concat(PORT));
+        chatServer = new WebSocket(`ws://localhost:${PORT}`);
     }
     catch (e) {
-        console.log("Error: ".concat(e));
+        console.log(`Error: ${e}`);
         return;
     }
-    chatServer.onmessage = function (event) {
-        console.log('received message:');
-        var data = JSON.parse(event.data);
-        var event_type = data['type'];
+
+
+    chatServer.onmessage = (event) => {
+        console.log('received message:')
+        let data = JSON.parse(event.data);
+        let event_type = data['type'];
         console.log(data);
+
         switch (event_type) {
             case 'video': {
-                console.log("link sent: ".concat(data['id']));
-                player.loadVideoById(data['id'], 0);
+                console.log(`link sent: ${data['id']}`);
+                player.loadVideoById(data['id'] as string, 0);
                 break;
             }
             default:
-                console.log("unknown event: ".concat(event_type));
+                console.log(`unknown event: ${event_type}`);
                 break;
         }
-    };
+    }
 }
+
 function onYouTubeIframeAPIReady() {
     console.log('api is ready!');
     player = new YT.Player("video-player", {
@@ -40,15 +45,18 @@ function onYouTubeIframeAPIReady() {
         },
         events: {
             onReady: onPlayerReady,
-            onStateChange: onStateChange
+            onStateChange: onStateChange,
         }
     });
+
     connectToChatServer();
 }
+
 function onPlayerReady() {
     console.log('player ready');
 }
-var done = false;
+
+let done = false;
 function onStateChange(event) {
     if (event.data == YT.PlayerState.PLAYING && !done) {
         done = true;

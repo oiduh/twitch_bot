@@ -113,8 +113,12 @@ client.on('message', async (channel, tags, message, self) => {
 
             let link = args[0];
             try {
-                await ytdl.getInfo(link);
-                media_share.send(link);
+                let videoId = await ytdl.getURLVideoID(link);
+                let event = {
+                    'type': 'video',
+                    'id': videoId
+                }
+                media_share.send(JSON.stringify(event));
             }
             catch (e) {
                 console.log('video does not seem to exist');

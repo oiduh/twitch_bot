@@ -86,7 +86,6 @@ emote_wall_server.on("connection", function (ws) { return __awaiter(void 0, void
 var MEDIA_SHARE_PORT = 3002;
 var media_share_server = new Server({ port: MEDIA_SHARE_PORT });
 var media_share;
-var YOUTUBE_REGEX = /^(http(s)?:\/\/)?((w){3}.)?youtu(be|.be)?(\.com)?\/.+/gm;
 media_share_server.on("connection", function (ws) { return __awaiter(void 0, void 0, void 0, function () {
     return __generator(this, function (_a) {
         switch (_a.label) {
@@ -124,7 +123,7 @@ client.on("connected", function () { return __awaiter(void 0, void 0, void 0, fu
     });
 }); });
 client.on('message', function (channel, tags, message, self) { return __awaiter(void 0, void 0, void 0, function () {
-    var _a, command, args, _b, twitch_emotes, _c, emote_source, emote_name, emote_url, link, info;
+    var _a, command, args, _b, twitch_emotes, _c, emote_source, emote_name, emote_url, link, videoId, event_1, e_1;
     return __generator(this, function (_d) {
         switch (_d.label) {
             case 0:
@@ -140,11 +139,11 @@ client.on('message', function (channel, tags, message, self) { return __awaiter(
                     case '!yt': return [3 /*break*/, 3];
                     case '!youtube': return [3 /*break*/, 3];
                 }
-                return [3 /*break*/, 5];
+                return [3 /*break*/, 8];
             case 1:
                 {
                     client.say(channel, "@".concat(tags.username, ", hello!"));
-                    return [3 /*break*/, 6];
+                    return [3 /*break*/, 9];
                 }
                 _d.label = 2;
             case 2:
@@ -163,7 +162,7 @@ client.on('message', function (channel, tags, message, self) { return __awaiter(
                     catch (e) {
                         console.log(e);
                     }
-                    return [3 /*break*/, 6];
+                    return [3 /*break*/, 9];
                 }
                 _d.label = 3;
             case 3:
@@ -172,28 +171,30 @@ client.on('message', function (channel, tags, message, self) { return __awaiter(
                     return [2 /*return*/];
                 }
                 link = args[0];
-                if (YOUTUBE_REGEX.test(link)) {
-                    console.log('YOUTUBE LINK LEGIT!');
-                }
-                else {
-                    console.log('NOT A YOUTUBE LINK!');
-                }
-                if (ytdl.validateURL(link))
-                    console.log('video exists');
-                else
-                    console.log('video does not exist');
-                return [4 /*yield*/, ytdl.getInfo(link)];
+                _d.label = 4;
             case 4:
-                info = _d.sent();
-                console.log(info);
-                return [3 /*break*/, 6];
+                _d.trys.push([4, 6, , 7]);
+                return [4 /*yield*/, ytdl.getURLVideoID(link)];
             case 5:
+                videoId = _d.sent();
+                event_1 = {
+                    'type': 'video',
+                    'id': videoId
+                };
+                media_share.send(JSON.stringify(event_1));
+                return [3 /*break*/, 7];
+            case 6:
+                e_1 = _d.sent();
+                console.log('video does not seem to exist');
+                return [3 /*break*/, 7];
+            case 7: return [3 /*break*/, 9];
+            case 8:
                 {
                     console.log('not a command!');
-                    return [3 /*break*/, 6];
+                    return [3 /*break*/, 9];
                 }
-                _d.label = 6;
-            case 6: return [2 /*return*/];
+                _d.label = 9;
+            case 9: return [2 /*return*/];
         }
     });
 }); });
