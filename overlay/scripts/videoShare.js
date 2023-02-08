@@ -1,6 +1,27 @@
 // @ts-ignore
 var PORT = 3002;
 var player;
+// https://developers.google.com/youtube/iframe_api_reference
+/*
+
+TODO: potential methods to implement
+
+player.getPlayerState():Number
+Returns the state of the player. Possible values are:
+-1 – unstarted
+0 – ended
+1 – playing
+2 – paused
+3 – buffering
+5 – video cued
+
+player.getDuration():Number
+
+player.addEventListener(event:String, listener:String):Void
+
+
+
+ */
 function connectToChatServer() {
     var chatServer;
     try {
@@ -18,7 +39,12 @@ function connectToChatServer() {
         switch (event_type) {
             case 'video': {
                 console.log("link sent: ".concat(data['id']));
-                player.loadVideoById(data['id'], 0);
+                var startSeconds = 5, endSeconds = 15;
+                player.loadVideoById({
+                    videoId: data['id'],
+                    startSeconds: startSeconds,
+                    endSeconds: endSeconds
+                });
                 break;
             }
             default:
@@ -32,7 +58,7 @@ function onYouTubeIframeAPIReady() {
     player = new YT.Player("video-player", {
         height: 500,
         width: 900,
-        videoId: 'fuFbQ-Mewfw',
+        videoId: 'D6VT_-mQHqY',
         playerVars: {
             playsinline: 1,
             autoplay: 0,
@@ -40,17 +66,23 @@ function onYouTubeIframeAPIReady() {
         },
         events: {
             onReady: onPlayerReady,
-            onStateChange: onStateChange
+            onStateChange: onStateChange,
+            onError: onError
         }
     });
     connectToChatServer();
 }
-function onPlayerReady() {
+function onPlayerReady(event) {
     console.log('player ready');
+    console.log(event);
+    // instead of playing the video it will buffer instead
+    // unstarted (-1) -> buffer (3) -> unstarted (-1)
+    // without playVideo() -> no state change
+    event.target.playVideo();
 }
-var done = false;
 function onStateChange(event) {
-    if (event.data == YT.PlayerState.PLAYING && !done) {
-        done = true;
-    }
+    console.log(event.data);
+}
+function onError(event) {
+    console.log(event.data);
 }
